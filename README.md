@@ -18,3 +18,15 @@ transaction records. Users should be able to view the accounting records before 
 
 The main objective is to demonstrate how programming can be used to automate basic accounting
 processes while ensuring the accuracy, consistency, and reliability of accounting information.
+
+---
+### Plan
+
+Development Steps:
+* Application Rules and Features (Google Docs)
+* Database design (Entities and Attributes)
+* Database implementation (SQLite)
+* User interface planning (Can be Figma or Canva)
+* Data handlers development and Testing (Java)
+* Migrating user interface plan to client (JavaFX; FXML and CSS)
+* Finalized testing and debugging (Java)
