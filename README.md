@@ -27,6 +27,6 @@ Development Steps:
 * Database design (Entities and Attributes) - __Gabriza & Catanus__
 * Database implementation (SQLite) - __Valmoria__
 * User interface planning (Can be Figma or Canva) - __Taguran & Abejuela__
-* Data handlers development and Testing (Java)
-* Migrating user interface plan to client (JavaFX; FXML and CSS)
-* Finalized testing and debugging (Java)
+* Data handlers development and Testing (Javascript)
+* Migrating user interface plan to client (HTML, CSS)
+* Finalized testing and debugging (Javascript)
