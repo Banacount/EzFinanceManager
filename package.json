@@ -1,0 +1,28 @@
+{
+  "name": "ez-finance-manager",
+  "version": "1.0.0",
+  "description": "A application to easily handle accounting tasks",
+  "homepage": "https://github.com/Banacount/EzFinanceManager#readme",
+  "bugs": {
+    "url": "https://github.com/Banacount/EzFinanceManager/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Banacount/EzFinanceManager.git"
+  },
+  "license": "ISC",
+  "author": "Banacount",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.2.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "electron": "^45.3.2",
+    "electron-builder": "^26.18.0"
+  }
+}
