@@ -23,10 +23,10 @@ processes while ensuring the accuracy, consistency, and reliability of accountin
 ### Plan
 
 Development Steps:
-* Application Rules and Features (Google Docs)
-* Database design (Entities and Attributes)
-* Database implementation (SQLite)
-* User interface planning (Can be Figma or Canva)
+* Application Rules and Features (Google Docs) - __Rivera__
+* Database design (Entities and Attributes) - __Gabriza & Catanus__
+* Database implementation (SQLite) - __Valmoria__
+* User interface planning (Can be Figma or Canva) - __Taguran & Abejuela__
 * Data handlers development and Testing (Java)
 * Migrating user interface plan to client (JavaFX; FXML and CSS)
 * Finalized testing and debugging (Java)
