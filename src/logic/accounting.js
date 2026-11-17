@@ -1,32 +1,11 @@
 import db from '../data/database.js';
-import { z } from 'zod';
-
-// Zod schema for validating a single line item
-const JournalLineSchema = z.object({
-  journalNote: z.string().optional(),
-  accountID: z.number().int().positive("Invalid Account ID"),
-  debit: z.number().nonnegative("Debit amount cannot be negative"),
-  credit: z.number().nonnegative("Credit amount cannot be negative")
-}).refine(data => !(data.debit > 0 && data.credit > 0), {
-  message: "A single line item cannot have both a debit and a credit amount."
-});
-
-// Zod schema for validating an entire transaction submission
-const TransactionPayloadSchema = z.object({
-  businessID: z.number().int().positive(),
-  entryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
-  referenceNo: z.string().min(1, "Reference number is required"),
-  description: z.string().min(1, "Description is required"),
-  createdBy: z.string().min(1, "Creator username is required"),
-  lines: z.array(JournalLineSchema).min(2, "An entry must have at least two account lines")
-});
+import { TransactionPayloadSchema, BusinessSchema } from './schemas.js';
 
 /**
  * Validates, processes, and saves a business transaction with double-entry checking.
  * Wraps the operation in an SQLite transaction to ensure ACID compliance.
  */
 export function createJournalEntry(payload) {
-  // Validate payload structure using Zod
   const validationResult = TransactionPayloadSchema.safeParse(payload);
   if (!validationResult.success) {
     const errorMessages = validationResult.error.errors.map(err => err.message).join(', ');
@@ -62,12 +41,12 @@ export function createJournalEntry(payload) {
 
     // Insert Line Items into JournalLines
     const stmtLine = db.prepare(`
-      INSERT INTO JournalLines (EntryID, AccountID, Debit, Credit)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO JournalLines (EntryID, JournalNote, AccountID, Debit, Credit)
+      VALUES (?, ?, ?, ?, ?)
     `);
 
     for (const line of lines) {
-      stmtLine.run(entryID, line.accountID, line.debit, line.credit);
+      stmtLine.run(entryID, line.journalNote, line.accountID, line.debit, line.credit);
     }
 
     // Log action to Audit Trail
@@ -89,6 +68,56 @@ export function createJournalEntry(payload) {
       throw new Error(`Reference number '${referenceNo}' already exists. Reference numbers must be unique.`);
     }
     throw error;
+  }
+}
+
+export function createBusiness(payload) {
+  const validation = BusinessSchema.safeParse(payload);
+  if (!validation.success) {
+    throw new Error(`Validation failed: ${validation.error.issues.map(i => i.message).join(', ')}`);
+  }
+
+  const { businessName, periodStart, periodEnd } = validation.data;
+
+  const insertBusinessTx = db.transaction(() => {
+    // Insert the business record
+    const insertResult = db.prepare(`
+      INSERT INTO Business (BusinessName, PeriodStart, PeriodEnd)
+      VALUES (?, ?, ?)
+    `).run(businessName, periodStart, periodEnd);
+
+    const businessID = insertResult.lastInsertRowid;
+
+    const defaultAccounts = [
+      { code: '110', name: 'Cash', type: 'Asset', normal: 'Debit' },
+      { code: '120', name: 'Accounts Receivable', type: 'Asset', normal: 'Debit' },
+      { code: '150', name: 'Equipment', type: 'Asset', normal: 'Debit' },
+      { code: '210', name: 'Accounts Payable', type: 'Liability', normal: 'Credit' },
+      { code: '310', name: "Owner's Capital", type: "Owner's Equity", normal: 'Credit' },
+      { code: '410', name: 'Service Revenue', type: 'Income', normal: 'Credit' },
+      { code: '510', name: 'Salaries Expense', type: 'Expenses', normal: 'Debit' },
+      { code: '525', name: 'Rent Expense', type: 'Expenses', normal: 'Debit' }
+    ];
+
+    // Seed the accounts tied to this specific BusinessID
+    const insertAccount = db.prepare(`
+      INSERT INTO Accounts (BusinessID, AccountCode, AccountName, AccountType, NormalBalance, IsActive)
+      VALUES (?, ?, ?, ?, ?, 1)
+    `);
+
+    for (const acc of defaultAccounts) {
+      insertAccount.run(businessID, acc.code, acc.name, acc.type, acc.normal);
+    }
+
+    return businessID;
+  });
+
+  // Execute the transaction
+  try {
+    const newBusinessID = insertBusinessTx();
+    return { success: true, businessID: newBusinessID, message: "Business created and accounts seeded successfully." };
+  } catch (error) {
+    throw new Error(`Failed to create business: ${error.message}`);
   }
 }
 
