@@ -26,7 +26,15 @@ Development Steps:
 * Application Rules and Features (Google Docs) - __Rivera__
 * Database design (Entities and Attributes) - __Gabriza & Catanus__
 * Database implementation (SQLite) - __Valmoria__
-* User interface planning (Can be Figma or Canva) - __Taguran & Abejuela__
+* User interface planning (Can be Figma or Canva) - __Taguran & Abejuela & Tumampoc__
 * Data handlers development and Testing (Javascript)
 * Migrating user interface plan to client (HTML, CSS)
 * Finalized testing and debugging (Javascript)
+
+---
+### Running the program
+Install all packages
+`npm i`
+
+Run the program
+`npx electron {name_of_js_file or .}`

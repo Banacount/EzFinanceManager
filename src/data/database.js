@@ -1,7 +1,14 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import { app, BrowserWindow } from 'electron/main';
 
-let db; // Change verbose to console.log if you want to debug SQL queries in terminal
+// Get root app path
+const dbPath = process.type === 'browser' || (app && typeof app.getPath === 'function')
+   ? path.join(app.getPath('userData'), 'accounting.db') 
+   : 'accounting.db';
+
+const db = new Database(dbPath, { verbose: console.log }); // Change verbose to console.log for debugging
+db.pragma('foreign_keys = ON'); // Enable foreign key constraints in SQLite
 
 // Create all the entities query
 const createTableQuery = `
@@ -81,17 +88,9 @@ const createTableQuery = `
   );
 `;
 
-export function initializeDatabase(app) {
-  // Get root app path
-  const dbPath = process.type === 'browser' || (app && typeof app.getPath === 'function')
-     ? path.join(app.getPath('userData'), 'accounting.db') 
-     : 'accounting.db';
- 
-  db = new Database(dbPath, { verbose: console.log });
-  db.pragma('foreign_keys = ON'); // Enable foreign key constraints in SQLite
-  db.exec(createTableQuery); // Create Tables
-
+export function initializeDatabase() {
   // Seed Default Business Profile & Chart of Accounts if empty
+  db.exec(createTableQuery);
   seedDefaultData();
   console.log("Database initialized successfully at:", dbPath);
 }
