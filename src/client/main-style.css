@@ -1,0 +1,19 @@
+:root {
+	--white: #FFFFFF;
+	--bg-color: #F4F6F8;
+	--fg-color-1: #12263F;
+	--fg-color-2: #0B6E6E;
+	--fg-color-3: #727B8B;
+	--border-color-1: #757575;
+}
+
+body {
+	padding: 0;
+	margin: 0;
+	font-family: 'Inter-Variable', 'Arial Narrow', Arial, sans-serif;
+}
+
+h1, h2, h3, p {
+	padding: 0;
+	margin: 0;
+}

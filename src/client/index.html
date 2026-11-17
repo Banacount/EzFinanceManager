@@ -4,10 +4,30 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>EzFinanceManager</title>
-	<link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="main-style.css">
+	<link rel="stylesheet" href="main-menu.css">
+	<link rel="stylesheet" href="font.css">
 </head>
 <body>
-	<h1>Hello world</h1>
+	<div class="menu-container">
+		<div class="menu-logo">
+			<img src="assets/logo.svg" alt="ezfinancemanager-logo">
+		</div>
+
+		<div class="menu-1">
+			<h1>EZFinanceManager</h1>
+			<p>Run the full accounting cycle for a small business, one step at a time.</p>
+		</div>
+
+		<div class="menu-2">
+			<div class="contain">
+				<h2>Welcome</h2>
+				<button class="start">Start</button>
+				<button class="settings">Settings</button>
+				<button class="exit" id="exitBtn">Exit</button>
+			</div>
+		</div>
+	</div>
 </body>
 <script src="renderer.js"></script>
 </html>
