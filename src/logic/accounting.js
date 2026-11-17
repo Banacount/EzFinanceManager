@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 // Zod schema for validating a single line item
 const JournalLineSchema = z.object({
+  journalNote: z.string().optional(),
   accountID: z.number().int().positive("Invalid Account ID"),
   debit: z.number().nonnegative("Debit amount cannot be negative"),
   credit: z.number().nonnegative("Credit amount cannot be negative")

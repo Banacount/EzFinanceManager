@@ -1,12 +1,12 @@
 import { initializeDatabase } from './src/data/database.js';
 import { app, BrowserWindow } from 'electron/main';
+import path from 'path';
 import { createJournalEntry } from './src/logic/accounting.js';
 import db from './src/data/database.js';
 
-initializeDatabase(app);
+initializeDatabase();
 
 // This piece of code below is just for testing
-
 // Prepare id's needed for the test
 const business = db.prepare('SELECT BusinessID FROM Business LIMIT 1').get();
 const cashAccount = db.prepare('SELECT AccountID FROM Accounts WHERE AccountCode = ?').get('110'); // Cash (Asset, Debit)
@@ -44,8 +44,8 @@ try {
     description: 'Initial cash investment by owner',
     createdBy: 'JohnRushell',
     lines: [
-      { accountID: cashAccount.AccountID, debit: 5000000, credit: 0 },      // Debit Cash: 50,000.00 (in centavos)
-      { accountID: capitalAccount.AccountID, debit: 0, credit: 5000000 }    // Credit Capital: 50,000.00
+      { journalNote: 'Main office equipment', accountID: cashAccount.AccountID, debit: 5000000, credit: 0 },      // Debit Cash: 50,000.00 (in centavos)
+      { journalNote: 'Cash', accountID: capitalAccount.AccountID, debit: 0, credit: 5000000 }                     // Credit Capital: 50,000.00
     ]
   };
 
@@ -54,3 +54,22 @@ try {
 } catch (error) {
   console.error("FAILED unexpectedly:", error.message);
 }
+
+app.whenReady().then(() => {
+  const mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+
+  mainWindow.loadFile(path.join(import.meta.dirname, 'src/client/index.html'));
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
