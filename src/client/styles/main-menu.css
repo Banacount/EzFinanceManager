@@ -86,6 +86,7 @@
 	border: 0px solid;
 	background-color: transparent;
 	color: var(--fg-color-3);
+	outline: none;
 }
 .menu-2 .exit:hover {
 	text-decoration: underline;
