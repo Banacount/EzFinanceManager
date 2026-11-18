@@ -5,15 +5,22 @@
 	--fg-color-2: #0B6E6E;
 	--fg-color-3: #727B8B;
 	--border-color-1: #757575;
+	--border-color-2: #DDE3EA;
 }
 
 body {
 	padding: 0;
 	margin: 0;
 	font-family: 'Inter-Variable', 'Arial Narrow', Arial, sans-serif;
+	background-color: var(--bg-color);
 }
 
 h1, h2, h3, p {
 	padding: 0;
 	margin: 0;
+}
+
+button {
+	font-family: 'Inter-Variable', 'Arial Narrow', Arial, sans-serif;
+	cursor: pointer;
 }
