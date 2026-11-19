@@ -1,8 +1,37 @@
 import { default as mainMenu } from './views/mainMenu.js'
 import { default as notFound } from './views/notFound.js'
 import { default as businessMenu } from './views/businessMenu.js'
+import { default as worksheet } from './views/worksheet.js';
 
-const pages = [notFound, mainMenu, businessMenu]
+// Worksheets
+import { default as chartOfAccounts } from './views/worksheets/chartOfAccounts.js';
+import { default as journalEntries } from './views/worksheets/journalEntries.js';
+import { default as ledger } from './views/worksheets/ledger.js';
+import { default as ujbt } from './views/worksheets/ujbt.js';
+import { default as aje } from './views/worksheets/aje.js';
+import { default as ajtb } from './views/worksheets/ajtb.js';
+import { default as incomeStatement } from './views/worksheets/incomeStatement.js';
+import { default as balanceSheet } from './views/worksheets/balanceSheet.js';
+import { default as closingEntries } from './views/worksheets/closingEntries.js';
+import { default as pcbt } from './views/worksheets/pcbt.js';
+
+const pages = [
+	notFound,
+	mainMenu,
+	businessMenu,
+	chartOfAccounts,
+	journalEntries,
+	ledger,
+	ujbt,
+	aje,
+	ajtb,
+	incomeStatement,
+	balanceSheet,
+	closingEntries,
+	pcbt,
+	worksheet,
+];
+
 const app = document.getElementById("appContainer");
 let sumAllDom = '';
 
@@ -40,4 +69,4 @@ for (const page of pages) {
 	page.init();
 }
 
-loadPage("business-menu");
+loadPage("main-menu");

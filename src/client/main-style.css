@@ -6,6 +6,9 @@
 	--fg-color-3: #727B8B;
 	--border-color-1: #757575;
 	--border-color-2: #DDE3EA;
+	--table-rule: #4B5563;
+	--text-dark: #111827;
+	--danger-color: #DC2626;
 }
 
 body {

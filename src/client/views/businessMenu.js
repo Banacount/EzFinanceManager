@@ -87,6 +87,10 @@ control.init = () => {
 				p.textContent = `${business.PeriodStart} to ${business.PeriodEnd}`;
 				button.textContent = "Open";
 				businessItemContainer.appendChild(itemElement);
+
+				button.addEventListener('click', (e) => {
+					loadPage('chart-of-accounts');
+				});
 			}
 		} catch (err) {
 			console.log("Client error: ", err);
