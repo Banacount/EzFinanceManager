@@ -7,6 +7,7 @@ const control = {};
 control.name = 'chart-of-accounts';
 control.accounts = null;
 control.activeClassification = '';
+control.activeSearch = '';
 
 control.render = () => {
 	return renderWorkspaceLayout(
@@ -15,7 +16,7 @@ control.render = () => {
 			<div class="coa-header">
 				<h2>Chart of Accounts</h2>
 				<div class="coa-actions">
-					<input type="search" placeholder="Search number or title">
+					<input type="search" id="searchAccountsInput" placeholder="Search number or title">
 					<button type="button" class="coa-primary-btn" id="addAccountBtn">Add account +</button>
 					<button type="button" class="coa-secondary-btn" id="selectAccountsBtn">Select</button>
 					<button type="button" class="coa-delete-selected-btn" id="deleteSelectedAccountsBtn">Delete selected</button>
@@ -285,7 +286,7 @@ control.init = () => {
 
 		accountsTable.classList.add("is-selecting");
 		selectBtn.classList.add("is-active");
-		selectBtn.textContent = "Done";
+		selectBtn.textContent = "Cancel";
 		deleteSelectedBtn.classList.add("is-visible");
 	});
 
@@ -310,6 +311,11 @@ control.init = () => {
 			control.activeClassification = button.dataset.classification;
 			control.renderAccountRows(control.accounts);
 		});
+	});
+
+	document.getElementById("searchAccountsInput").addEventListener("input", (e) => {
+		control.activeSearch = e.target.value.trim().toLowerCase();
+		control.renderAccountRows(control.accounts);
 	});
 };
 
@@ -337,7 +343,13 @@ control.renderAccountRows = (accounts) => {
 
 	let displayedAccounts = accounts;
 	if (control.activeClassification) {
-		displayedAccounts = accounts.filter(account => account.AccountType === control.activeClassification);
+		displayedAccounts = displayedAccounts.filter(account => account.AccountType === control.activeClassification);
+	}
+	if (control.activeSearch) {
+		displayedAccounts = displayedAccounts.filter(account =>
+			account.AccountCode.toLowerCase().includes(control.activeSearch) ||
+			account.AccountName.toLowerCase().includes(control.activeSearch)
+		);
 	}
 
 	accountsTable.innerHTML = "";

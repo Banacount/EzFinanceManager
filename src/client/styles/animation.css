@@ -1,0 +1,193 @@
+@keyframes ui-fade-up {
+	from {
+		opacity: 0;
+		transform: translateY(1.25rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes ui-logo-tilt {
+	0%, 100% {
+		transform: rotate(-6deg);
+	}
+	50% {
+		transform: rotate(6deg);
+	}
+}
+
+@keyframes ui-button-shine {
+	0%, 60%, 100% {
+		left: -75%;
+	}
+	80% {
+		left: 125%;
+	}
+}
+
+@keyframes ui-item-slide {
+	from {
+		opacity: 0;
+		transform: translateX(-1rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes ui-row-drop {
+	from {
+		opacity: 0;
+		transform: translateY(0.6rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes ui-pill-wiggle {
+	0%, 100% {
+		transform: rotate(0deg);
+	}
+	25% {
+		transform: rotate(-3deg);
+	}
+	75% {
+		transform: rotate(3deg);
+	}
+}
+
+@keyframes ui-modal-pop {
+	0% {
+		opacity: 0;
+		transform: scale(0.85) translateY(1rem);
+	}
+	70% {
+		opacity: 1;
+		transform: scale(1.03) translateY(0);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+	}
+}
+
+@keyframes ui-title-glow {
+	0%, 100% {
+		text-shadow: 0 0 0 rgba(11, 110, 110, 0);
+	}
+	50% {
+		text-shadow: 0 0 0.75rem rgba(11, 110, 110, 0.85);
+	}
+}
+
+@keyframes ui-soft-pulse {
+	0%, 100% {
+		box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.45);
+	}
+	50% {
+		box-shadow: 0 0 0 0.6rem rgba(220, 38, 38, 0);
+	}
+}
+
+.menu-container .menu-logo img {
+	animation: ui-logo-tilt 6s ease-in-out infinite;
+}
+
+.menu-container .menu-1 h1,
+.menu-container .menu-1 p,
+.menu-container .menu-2 .contain {
+	animation: ui-fade-up 0.6s ease both;
+}
+
+.menu-container .menu-1 p {
+	animation-delay: 0.1s;
+}
+
+.menu-container .menu-2 .contain {
+	animation-delay: 0.2s;
+}
+
+.menu-container .menu-2 button:nth-child(2) {
+	animation: ui-fade-up 0.5s ease 0.3s both;
+}
+
+.menu-container .menu-2 button:nth-child(3) {
+	animation: ui-fade-up 0.5s ease 0.4s both;
+}
+
+.menu-container .menu-2 button:nth-child(4) {
+	animation: ui-fade-up 0.5s ease 0.5s both;
+}
+
+.menu-container .menu-2 .start {
+	position: relative;
+	overflow: hidden;
+}
+
+.menu-container .menu-2 .start::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: -75%;
+	width: 50%;
+	height: 100%;
+	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+	transform: skewX(-20deg);
+	pointer-events: none;
+	animation: ui-button-shine 3.5s ease-in-out infinite;
+}
+
+.business-menu-container .section-1 .table .item {
+	animation: ui-item-slide 0.35s ease both;
+}
+
+.business-menu-container .section-1 .table .item:nth-child(even) {
+	animation-delay: 0.06s;
+}
+
+.business-menu-container .section-1 .table .item button {
+	transition: transform 0.18s ease;
+}
+
+.business-menu-container .section-1 .table .item button:hover {
+	transform: translateY(-2px);
+}
+
+.business-delete-modal.is-active .business-delete-modal-panel,
+.coa-edit-modal.is-active .coa-edit-modal-panel {
+	animation: ui-modal-pop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.workspace-container .titlebar h1 {
+	animation: ui-title-glow 5s ease-in-out infinite;
+}
+
+.workspace-container .content .coa-table-wrap .coa-table tbody tr {
+	animation: ui-row-drop 0.3s ease both;
+}
+
+.workspace-container .content .coa-table-wrap .coa-table tbody tr:nth-child(even) {
+	animation-delay: 0.03s;
+}
+
+.workspace-container .content .coa-filters button:hover {
+	animation: ui-pill-wiggle 0.4s ease;
+}
+
+.workspace-container .content .coa-header .coa-actions .coa-delete-selected-btn.is-visible {
+	animation: ui-soft-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+	}
+}
