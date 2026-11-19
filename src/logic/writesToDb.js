@@ -1,5 +1,5 @@
 import db_pkg from '../data/database.cjs';
-import { TransactionPayloadSchema, BusinessSchema, AccountEditSchema } from './schemas.js';
+import { TransactionPayloadSchema, BusinessSchema, AccountEditSchema, BusinessDeleteSchema } from './schemas.js';
 
 const { db } = db_pkg;
 
@@ -171,6 +171,58 @@ export function editAccount(payload) {
       throw new Error(`Account code '${accountCode}' already exists for this business.`);
     }
     throw error;
+  }
+}
+
+export function deleteBusiness(payload) {
+  const validation = BusinessDeleteSchema.safeParse(payload);
+  if (!validation.success) {
+    throw new Error(`Validation failed: ${validation.error.issues.map(i => i.message).join(', ')}`);
+  }
+
+  const { businessID, deletedBy } = validation.data;
+
+  const deleteBusinessTx = db.transaction(() => {
+    const existingBusiness = db.prepare(`
+      SELECT * FROM Business WHERE BusinessID = ?
+    `).get(businessID);
+
+    if (!existingBusiness) {
+      throw new Error("Business not found.");
+    }
+
+    // Remove dependent records first to satisfy the foreign key constraints
+    db.prepare(`
+      DELETE FROM JournalLines
+      WHERE EntryID IN (SELECT EntryID FROM JournalEntries WHERE BusinessID = ?)
+    `).run(businessID);
+
+    db.prepare(`
+      DELETE FROM AdjustmentLines
+      WHERE AdjustmentID IN (SELECT AdjustmentID FROM Adjustments WHERE BusinessID = ?)
+    `).run(businessID);
+
+    db.prepare(`DELETE FROM JournalEntries WHERE BusinessID = ?`).run(businessID);
+    db.prepare(`DELETE FROM Adjustments WHERE BusinessID = ?`).run(businessID);
+    db.prepare(`DELETE FROM Accounts WHERE BusinessID = ?`).run(businessID);
+    db.prepare(`DELETE FROM Business WHERE BusinessID = ?`).run(businessID);
+
+    // Log action to Audit Trail
+    const stmtAudit = db.prepare(`
+      INSERT INTO AuditTrail (TableName, RecordID, Action, OldValue, NewValue, ActionDate, UserName)
+      VALUES ('Business', ?, 'DELETE', ?, NULL, datetime('now'), ?)
+    `);
+    stmtAudit.run(businessID, JSON.stringify(existingBusiness), deletedBy);
+
+    return businessID;
+  });
+
+  // Execute the transaction
+  try {
+    const deletedBusinessID = deleteBusinessTx();
+    return { success: true, businessID: deletedBusinessID, message: "Business deleted successfully." };
+  } catch (error) {
+    throw new Error(`Failed to delete business: ${error.message}`);
   }
 }
 

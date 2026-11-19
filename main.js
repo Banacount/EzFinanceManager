@@ -1,7 +1,7 @@
 import db_pkg from './src/data/database.cjs';
 import { app, BrowserWindow, ipcMain } from 'electron/main';
 import path from 'path';
-import { createJournalEntry, createBusiness, editAccount } from './src/logic/writesToDb.js';
+import { createJournalEntry, createBusiness, editAccount, deleteBusiness } from './src/logic/writesToDb.js';
 import { getAllBusiness, getAccounts } from './src/logic/readsFromDb.js';
 
 const { initializeDatabase, db } = db_pkg;
@@ -124,6 +124,19 @@ ipcMain.handle('edit-account', (event, account) => {
     };
 
     const result = editAccount(accountPayload);
+    return { didFail: false, message: result };
+  } catch (error) {
+    return { didFail: true, message: error.message };
+  }
+});
+
+ipcMain.handle('delete-business', (event, business) => {
+  try {
+    const businessPayload = {
+      businessID: Number(business.BusinessID)
+    };
+
+    const result = deleteBusiness(businessPayload);
     return { didFail: false, message: result };
   } catch (error) {
     return { didFail: true, message: error.message };

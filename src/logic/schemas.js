@@ -39,3 +39,8 @@ export const AccountEditSchema = z.object({
   normalBalance: z.enum(['Debit', 'Credit']),
   editedBy: z.string().min(1, "Editor username is required").default('System')
 });
+
+export const BusinessDeleteSchema = z.object({
+  businessID: z.number().int().positive("Invalid Business ID"),
+  deletedBy: z.string().min(1, "Deleter username is required").default('System')
+});
