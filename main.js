@@ -1,7 +1,7 @@
 import db_pkg from './src/data/database.cjs';
 import { app, BrowserWindow, ipcMain } from 'electron/main';
 import path from 'path';
-import { createJournalEntry, createBusiness } from './src/logic/writesToDb.js';
+import { createJournalEntry, createBusiness, editAccount } from './src/logic/writesToDb.js';
 import { getAllBusiness, getAccounts } from './src/logic/readsFromDb.js';
 
 const { initializeDatabase, db } = db_pkg;
@@ -79,9 +79,9 @@ app.on('window-all-closed', () => {
 ipcMain.handle('get-all-business', () => {
   try {
     const get = getAllBusiness();
-    return get;
+    return { didFail: false, message: get };
   } catch (err) {
-    console.error(err);
+    return { didFail: true, message: err };
   }
 });
 
@@ -106,6 +106,24 @@ ipcMain.handle('add-business', (event, business) => {
     };
 
     const result = createBusiness(businessPayload);
+    return { didFail: false, message: result };
+  } catch (error) {
+    return { didFail: true, message: error.message };
+  }
+});
+
+ipcMain.handle('edit-account', (event, account) => {
+  try {
+    const accountPayload = {
+      accountID: Number(account.AccountID),
+      businessID: Number(account.BusinessID),
+      accountCode: account.AccountCode,
+      accountName: account.AccountName,
+      accountType: account.AccountType,
+      normalBalance: account.NormalBalance
+    };
+
+    const result = editAccount(accountPayload);
     return { didFail: false, message: result };
   } catch (error) {
     return { didFail: true, message: error.message };

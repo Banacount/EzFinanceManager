@@ -21,8 +21,21 @@ export const TransactionPayloadSchema = z.object({
 });
 
 export const BusinessSchema = z.object({
-  businessName: z.string().min(1, "Business name is required"),
-  ownerName: z.string().min(1, "Owner name is required"),
+  businessName: z.string().trim().min(1, "Business name is required"),
+  ownerName: z.string().trim().min(1, "Owner name is required"),
   periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date must be YYYY-MM-DD"),
   periodEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "End date must be YYYY-MM-DD")
+}).refine(data => data.periodEnd >= data.periodStart, {
+  message: "End date must be on or after the start date.",
+  path: ['periodEnd']
+});
+
+export const AccountEditSchema = z.object({
+  accountID: z.number().int().positive("Invalid Account ID"),
+  businessID: z.number().int().positive("Invalid Business ID"),
+  accountCode: z.string().min(1, "Account code is required"),
+  accountName: z.string().min(1, "Account name is required"),
+  accountType: z.enum(['Asset', 'Liability', 'Owners Equity', 'Income', 'Expenses']),
+  normalBalance: z.enum(['Debit', 'Credit']),
+  editedBy: z.string().min(1, "Editor username is required").default('System')
 });

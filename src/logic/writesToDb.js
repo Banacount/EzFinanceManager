@@ -1,5 +1,5 @@
 import db_pkg from '../data/database.cjs';
-import { TransactionPayloadSchema, BusinessSchema } from './schemas.js';
+import { TransactionPayloadSchema, BusinessSchema, AccountEditSchema } from './schemas.js';
 
 const { db } = db_pkg;
 
@@ -120,6 +120,57 @@ export function createBusiness(payload) {
     return { success: true, businessID: newBusinessID, message: "Business created and accounts seeded successfully." };
   } catch (error) {
     throw new Error(`Failed to create business: ${error.message}`);
+  }
+}
+
+export function editAccount(payload) {
+  const validation = AccountEditSchema.safeParse(payload);
+  if (!validation.success) {
+    throw new Error(`Validation failed: ${validation.error.issues.map(i => i.message).join(', ')}`);
+  }
+
+  const { accountID, businessID, accountCode, accountName, accountType, normalBalance, editedBy } = validation.data;
+
+  const updateAccountTx = db.transaction(() => {
+    const existingAccount = db.prepare(`
+      SELECT * FROM Accounts WHERE AccountID = ? AND BusinessID = ?
+    `).get(accountID, businessID);
+
+    if (!existingAccount) {
+      throw new Error("Account not found for this business.");
+    }
+
+    db.prepare(`
+      UPDATE Accounts
+      SET AccountCode = ?, AccountName = ?, AccountType = ?, NormalBalance = ?
+      WHERE AccountID = ? AND BusinessID = ?
+    `).run(accountCode, accountName, accountType, normalBalance, accountID, businessID);
+
+    // Log action to Audit Trail
+    const stmtAudit = db.prepare(`
+      INSERT INTO AuditTrail (TableName, RecordID, Action, OldValue, NewValue, ActionDate, UserName)
+      VALUES ('Accounts', ?, 'UPDATE', ?, ?, datetime('now'), ?)
+    `);
+    stmtAudit.run(
+      accountID,
+      JSON.stringify(existingAccount),
+      JSON.stringify({ accountCode, accountName, accountType, normalBalance }),
+      editedBy
+    );
+
+    return accountID;
+  });
+
+  // Execute the transaction
+  try {
+    const updatedAccountID = updateAccountTx();
+    return { success: true, accountID: updatedAccountID, message: "Account updated successfully." };
+  } catch (error) {
+    // If it's a unique constraint violation on AccountCode
+    if (error.message.includes('UNIQUE constraint failed')) {
+      throw new Error(`Account code '${accountCode}' already exists for this business.`);
+    }
+    throw error;
   }
 }
 

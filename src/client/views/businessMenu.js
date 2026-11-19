@@ -71,9 +71,9 @@ control.init = () => {
 	const loadBusinessItems = async () => {
 		try {
 			const getAllBusiness = await ipcRenderer.invoke('get-all-business');
-			businessItemContainer.innerHTML = "";
 
-			for (const business of getAllBusiness) {
+			businessItemContainer.innerHTML = "";
+			for (const business of getAllBusiness.message) {
 				const itemElement = document.createElement('div');
 				const titleElement = document.createElement('div');
 				const h3 = document.createElement('h3');
@@ -101,22 +101,21 @@ control.init = () => {
 	};
 
 	createBusinessBtn.addEventListener("click", async (e) => {
+		const businessNameIn = document.getElementById("inputBusinessName");
+		const ownerIn = document.getElementById("inputOwnerName");
+		const dateStart = document.getElementById("inputDateStart");
+		const dateEnd = document.getElementById("inputDateEnd");
+
+		const business = {
+			BusinessName: businessNameIn.value.trim(),
+			OwnerName: ownerIn.value.trim(),
+			PeriodStart: dateStart.value,
+			PeriodEnd: dateEnd.value,
+		};
+
+		createBusinessBtn.disabled = true;
 		try {
-			const businessNameIn = document.getElementById("inputBusinessName");
-			const ownerIn = document.getElementById("inputOwnerName");
-			const dateStart = document.getElementById("inputDateStart");
-			const dateEnd = document.getElementById("inputDateEnd");
-
-			const business = {
-				BusinessName: businessNameIn.value,
-				OwnerName: ownerIn.value,
-				PeriodStart: dateStart.value,
-				PeriodEnd: dateEnd.value,
-			};
-			console.log(business);
-
 			const contactForAdd = await ipcRenderer.invoke('add-business', business);
-			console.log(contactForAdd);
 
 			if (!contactForAdd.didFail) {
 				alert("Successfully Added Business!");
@@ -130,6 +129,8 @@ control.init = () => {
 			}
 		} catch (err) {
 			console.log("Client error: ", err);
+		} finally {
+			createBusinessBtn.disabled = false;
 		}
 	});
 

@@ -113,12 +113,103 @@ control.render = () => {
 					</tbody>
 				</table>
 			</div>
+
+			<div class="coa-edit-modal" id="accountEditModal">
+				<div class="coa-edit-modal-backdrop" id="accountEditBackdrop"></div>
+				<div class="coa-edit-modal-panel" role="dialog" aria-modal="true" aria-labelledby="accountEditTitle">
+					<div class="coa-edit-modal-header">
+						<h3 id="accountEditTitle">Edit account</h3>
+						<button type="button" class="coa-edit-modal-close" id="accountEditCloseBtn">&times;</button>
+					</div>
+
+					<div class="coa-edit-modal-body">
+						<input type="hidden" id="editAccountId">
+						<div class="coa-edit-modal-field">
+							<label for="editAccountCode">Account code</label>
+							<input type="text" id="editAccountCode">
+						</div>
+						<div class="coa-edit-modal-field">
+							<label for="editAccountName">Account title</label>
+							<input type="text" id="editAccountName">
+						</div>
+						<div class="coa-edit-modal-field">
+							<label for="editAccountType">Classification</label>
+							<select id="editAccountType">
+								<option value="Asset">Asset</option>
+								<option value="Liability">Liability</option>
+								<option value="Owners Equity">Owners Equity</option>
+								<option value="Income">Income</option>
+								<option value="Expenses">Expenses</option>
+							</select>
+						</div>
+						<div class="coa-edit-modal-field">
+							<label for="editNormalBalance">Normal balance</label>
+							<select id="editNormalBalance">
+								<option value="Debit">Debit</option>
+								<option value="Credit">Credit</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="coa-edit-modal-footer">
+						<button type="button" class="coa-edit-modal-secondary-btn" id="accountEditCancelBtn">Cancel</button>
+						<button type="button" class="coa-edit-modal-primary-btn" id="accountEditSaveBtn">Save changes</button>
+					</div>
+				</div>
+			</div>
 		`,
 	);
 };
 
 control.init = () => {
 	initWorkspaceNav(control.name);
+
+	const editModal = document.getElementById("accountEditModal");
+
+	const closeEditModal = () => {
+		editModal.classList.remove("is-active");
+	};
+
+	document.getElementById("accountEditCloseBtn").addEventListener("click", closeEditModal);
+	document.getElementById("accountEditCancelBtn").addEventListener("click", closeEditModal);
+	document.getElementById("accountEditBackdrop").addEventListener("click", closeEditModal);
+
+	document.getElementById("accountEditSaveBtn").addEventListener("click", async (e) => {
+		try {
+			const account = {
+				AccountID: document.getElementById("editAccountId").value,
+				BusinessID: getBusinessId(),
+				AccountCode: document.getElementById("editAccountCode").value,
+				AccountName: document.getElementById("editAccountName").value,
+				AccountType: document.getElementById("editAccountType").value,
+				NormalBalance: document.getElementById("editNormalBalance").value
+			};
+
+			const contactForEdit = await ipcRenderer.invoke('edit-account', account);
+			if (!contactForEdit.didFail) {
+				alert("Successfully Updated Account!");
+				closeEditModal();
+				control.fetchAccounts();
+			} else {
+				alert(contactForEdit.message);
+			}
+		} catch (err) {
+			console.log("Client error: ", err);
+		}
+	});
+};
+
+control.openEditAccount = (account) => {
+	const editModal = document.getElementById("accountEditModal");
+
+	document.getElementById("editAccountId").value = account.AccountID;
+	document.getElementById("editAccountCode").value = account.AccountCode;
+	document.getElementById("editAccountName").value = account.AccountName;
+	document.getElementById("editAccountType").value = account.AccountType;
+	document.getElementById("editNormalBalance").value = account.NormalBalance;
+
+	editModal.classList.add("is-active");
+	document.getElementById("editAccountCode").focus();
 };
 
 control.fetchAccounts = async () => {
@@ -145,6 +236,9 @@ control.fetchAccounts = async () => {
 		title_.textContent = account.AccountName;
 		class_.textContent = account.AccountType;
 		normal_.textContent = account.NormalBalance;
+
+		tr.className = 'is-clickable';
+		tr.addEventListener('click', (e) => control.openEditAccount(account));
 
 		tr.append(tabular_nums_, title_, class_, normal_);
 		accountsTable.appendChild(tr);
