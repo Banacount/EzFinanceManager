@@ -1,5 +1,5 @@
 import db_pkg from '../data/database.cjs';
-import { TransactionPayloadSchema, BusinessSchema, AccountEditSchema, BusinessDeleteSchema } from './schemas.js';
+import { TransactionPayloadSchema, BusinessSchema, AccountEditSchema, BusinessDeleteSchema, AccountAddSchema, AccountsDeleteSchema } from './schemas.js';
 
 const { db } = db_pkg;
 
@@ -223,6 +223,104 @@ export function deleteBusiness(payload) {
     return { success: true, businessID: deletedBusinessID, message: "Business deleted successfully." };
   } catch (error) {
     throw new Error(`Failed to delete business: ${error.message}`);
+  }
+}
+
+export function createAccount(payload) {
+  const validation = AccountAddSchema.safeParse(payload);
+  if (!validation.success) {
+    throw new Error(`Validation failed: ${validation.error.issues.map(i => i.message).join(', ')}`);
+  }
+
+  const { businessID, accountCode, accountName, accountType, normalBalance, addedBy } = validation.data;
+
+  const insertAccountTx = db.transaction(() => {
+    const existingBusiness = db.prepare(`
+      SELECT BusinessID FROM Business WHERE BusinessID = ?
+    `).get(businessID);
+
+    if (!existingBusiness) {
+      throw new Error("Business not found.");
+    }
+
+    const insertResult = db.prepare(`
+      INSERT INTO Accounts (BusinessID, AccountCode, AccountName, AccountType, NormalBalance, IsActive)
+      VALUES (?, ?, ?, ?, ?, 1)
+    `).run(businessID, accountCode, accountName, accountType, normalBalance);
+
+    const accountID = insertResult.lastInsertRowid;
+
+    // Log action to Audit Trail
+    const stmtAudit = db.prepare(`
+      INSERT INTO AuditTrail (TableName, RecordID, Action, OldValue, NewValue, ActionDate, UserName)
+      VALUES ('Accounts', ?, 'INSERT', NULL, ?, datetime('now'), ?)
+    `);
+    stmtAudit.run(accountID, JSON.stringify({ accountCode, accountName, accountType, normalBalance }), addedBy);
+
+    return accountID;
+  });
+
+  // Execute the transaction
+  try {
+    const newAccountID = insertAccountTx();
+    return { success: true, accountID: newAccountID, message: "Account added successfully." };
+  } catch (error) {
+    // If it's a unique constraint violation on AccountCode
+    if (error.message.includes('UNIQUE constraint failed')) {
+      throw new Error(`Account code '${accountCode}' already exists for this business.`);
+    }
+    throw error;
+  }
+}
+
+export function deleteAccounts(payload) {
+  const validation = AccountsDeleteSchema.safeParse(payload);
+  if (!validation.success) {
+    throw new Error(`Validation failed: ${validation.error.issues.map(i => i.message).join(', ')}`);
+  }
+
+  const { businessID, accountIDs, deletedBy } = validation.data;
+
+  const deleteAccountsTx = db.transaction(() => {
+    const stmtGetAccount = db.prepare(`
+      SELECT * FROM Accounts WHERE AccountID = ? AND BusinessID = ?
+    `);
+    const stmtDeleteJournalLines = db.prepare(`
+      DELETE FROM JournalLines WHERE AccountID = ?
+    `);
+    const stmtDeleteAdjustmentLines = db.prepare(`
+      DELETE FROM AdjustmentLines WHERE AccountID = ?
+    `);
+    const stmtDeleteAccount = db.prepare(`
+      DELETE FROM Accounts WHERE AccountID = ? AND BusinessID = ?
+    `);
+    const stmtAudit = db.prepare(`
+      INSERT INTO AuditTrail (TableName, RecordID, Action, OldValue, NewValue, ActionDate, UserName)
+      VALUES ('Accounts', ?, 'DELETE', ?, NULL, datetime('now'), ?)
+    `);
+
+    for (const accountID of accountIDs) {
+      const existingAccount = stmtGetAccount.get(accountID, businessID);
+      if (!existingAccount) {
+        throw new Error("One or more accounts were not found for this business.");
+      }
+
+      // Remove dependent lines first to satisfy the foreign key constraints
+      stmtDeleteJournalLines.run(accountID);
+      stmtDeleteAdjustmentLines.run(accountID);
+      stmtDeleteAccount.run(accountID, businessID);
+      stmtAudit.run(accountID, JSON.stringify(existingAccount), deletedBy);
+    }
+
+    return accountIDs;
+  });
+
+  // Execute the transaction
+  try {
+    const deletedAccountIDs = deleteAccountsTx();
+    return { success: true, accountIDs: deletedAccountIDs, message: `${deletedAccountIDs.length} account(s) deleted successfully.` };
+  } catch (error) {
+    throw new Error(`Failed to delete accounts: ${error.message}`);
   }
 }
 

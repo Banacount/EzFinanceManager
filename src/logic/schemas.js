@@ -44,3 +44,18 @@ export const BusinessDeleteSchema = z.object({
   businessID: z.number().int().positive("Invalid Business ID"),
   deletedBy: z.string().min(1, "Deleter username is required").default('System')
 });
+
+export const AccountAddSchema = z.object({
+  businessID: z.number().int().positive("Invalid Business ID"),
+  accountCode: z.string().trim().min(1, "Account code is required"),
+  accountName: z.string().trim().min(1, "Account name is required"),
+  accountType: z.enum(['Asset', 'Liability', 'Owners Equity', 'Income', 'Expenses']),
+  normalBalance: z.enum(['Debit', 'Credit']),
+  addedBy: z.string().min(1, "Creator username is required").default('System')
+});
+
+export const AccountsDeleteSchema = z.object({
+  businessID: z.number().int().positive("Invalid Business ID"),
+  accountIDs: z.array(z.number().int().positive("Invalid Account ID")).min(1, "At least one account must be selected."),
+  deletedBy: z.string().min(1, "Deleter username is required").default('System')
+});

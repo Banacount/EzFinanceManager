@@ -1,7 +1,7 @@
 import db_pkg from './src/data/database.cjs';
 import { app, BrowserWindow, ipcMain } from 'electron/main';
 import path from 'path';
-import { createJournalEntry, createBusiness, editAccount, deleteBusiness } from './src/logic/writesToDb.js';
+import { createJournalEntry, createBusiness, editAccount, deleteBusiness, createAccount, deleteAccounts } from './src/logic/writesToDb.js';
 import { getAllBusiness, getAccounts } from './src/logic/readsFromDb.js';
 
 const { initializeDatabase, db } = db_pkg;
@@ -137,6 +137,37 @@ ipcMain.handle('delete-business', (event, business) => {
     };
 
     const result = deleteBusiness(businessPayload);
+    return { didFail: false, message: result };
+  } catch (error) {
+    return { didFail: true, message: error.message };
+  }
+});
+
+ipcMain.handle('add-account', (event, account) => {
+  try {
+    const accountPayload = {
+      businessID: Number(account.BusinessID),
+      accountCode: account.AccountCode,
+      accountName: account.AccountName,
+      accountType: account.AccountType,
+      normalBalance: account.NormalBalance
+    };
+
+    const result = createAccount(accountPayload);
+    return { didFail: false, message: result };
+  } catch (error) {
+    return { didFail: true, message: error.message };
+  }
+});
+
+ipcMain.handle('delete-accounts', (event, selection) => {
+  try {
+    const selectionPayload = {
+      businessID: Number(selection.BusinessID),
+      accountIDs: selection.AccountIDs.map(id => Number(id))
+    };
+
+    const result = deleteAccounts(selectionPayload);
     return { didFail: false, message: result };
   } catch (error) {
     return { didFail: true, message: error.message };

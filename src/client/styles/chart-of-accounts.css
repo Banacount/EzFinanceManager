@@ -501,3 +501,67 @@
 	border: 1px solid var(--border-color-1);
 }
 
+.workspace-container .content .coa-header .coa-actions .coa-delete-selected-btn {
+	display: none;
+	height: 2.75rem;
+	padding-left: 1.25rem;
+	padding-right: 1.25rem;
+	background-color: var(--danger-color);
+	color: var(--white);
+	font-size: 0.95rem;
+	font-weight: bold;
+	border: 1px solid var(--danger-color);
+	border-radius: 0.75rem;
+	white-space: nowrap;
+	flex-shrink: 0;
+	box-sizing: border-box;
+}
+
+.workspace-container .content .coa-header .coa-actions .coa-delete-selected-btn.is-visible {
+	display: inline-block;
+}
+
+.workspace-container .content .coa-header .coa-actions .coa-delete-selected-btn:hover {
+	background-color: var(--danger-hover-color);
+	border-color: var(--danger-hover-color);
+}
+
+.workspace-container .content .coa-table-wrap .coa-table tbody td.col-no input.coa-account-checkbox {
+	display: none;
+	margin-right: 0.5rem;
+	accent-color: var(--fg-color-2);
+}
+
+.workspace-container .content .coa-table-wrap .coa-table tbody.is-selecting td.col-no input.coa-account-checkbox {
+	display: inline-block;
+}
+
+.workspace-container .content .coa-table-wrap .coa-table tbody.is-selecting tr.is-clickable {
+	cursor: default;
+}
+
+.coa-delete-modal .coa-edit-modal-header h3 {
+	color: var(--danger-color);
+}
+
+.coa-delete-modal .coa-edit-modal-body p {
+	font-size: 0.95rem;
+	line-height: 1.5;
+	color: var(--text-dark);
+}
+
+.coa-delete-modal .coa-edit-modal-primary-btn {
+	background-color: var(--danger-color);
+	border-color: var(--danger-color);
+}
+
+.coa-delete-modal .coa-edit-modal-primary-btn:hover {
+	background-color: var(--danger-hover-color);
+	border-color: var(--danger-hover-color);
+}
+
+.coa-delete-modal .coa-edit-modal-primary-btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
