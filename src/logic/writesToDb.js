@@ -1,5 +1,7 @@
-import db from '../data/database.js';
+import db_pkg from '../data/database.cjs';
 import { TransactionPayloadSchema, BusinessSchema } from './schemas.js';
+
+const { db } = db_pkg;
 
 /**
  * Validates, processes, and saves a business transaction with double-entry checking.
@@ -77,14 +79,14 @@ export function createBusiness(payload) {
     throw new Error(`Validation failed: ${validation.error.issues.map(i => i.message).join(', ')}`);
   }
 
-  const { businessName, periodStart, periodEnd } = validation.data;
+  const { businessName, ownerName, periodStart, periodEnd } = validation.data;
 
   const insertBusinessTx = db.transaction(() => {
     // Insert the business record
     const insertResult = db.prepare(`
-      INSERT INTO Business (BusinessName, PeriodStart, PeriodEnd)
-      VALUES (?, ?, ?)
-    `).run(businessName, periodStart, periodEnd);
+      INSERT INTO Business (BusinessName, OwnerName, PeriodStart, PeriodEnd)
+      VALUES (?, ?, ?, ?)
+    `).run(businessName, ownerName, periodStart, periodEnd);
 
     const businessID = insertResult.lastInsertRowid;
 
@@ -93,7 +95,7 @@ export function createBusiness(payload) {
       { code: '120', name: 'Accounts Receivable', type: 'Asset', normal: 'Debit' },
       { code: '150', name: 'Equipment', type: 'Asset', normal: 'Debit' },
       { code: '210', name: 'Accounts Payable', type: 'Liability', normal: 'Credit' },
-      { code: '310', name: "Owner's Capital", type: "Owner's Equity", normal: 'Credit' },
+      { code: '310', name: "Owner's Capital", type: 'Owners Equity', normal: 'Credit' },
       { code: '410', name: 'Service Revenue', type: 'Income', normal: 'Credit' },
       { code: '510', name: 'Salaries Expense', type: 'Expenses', normal: 'Debit' },
       { code: '525', name: 'Rent Expense', type: 'Expenses', normal: 'Debit' }

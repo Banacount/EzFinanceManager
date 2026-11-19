@@ -40,4 +40,4 @@ for (const page of pages) {
 	page.init();
 }
 
-loadPage("main-menu");
+loadPage("business-menu");

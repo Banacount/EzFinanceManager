@@ -1,9 +1,10 @@
-import { initializeDatabase } from './src/data/database.js';
-import { app, BrowserWindow } from 'electron/main';
+import db_pkg from './src/data/database.cjs';
+import { app, BrowserWindow, ipcMain } from 'electron/main';
 import path from 'path';
-import { createJournalEntry } from './src/logic/accounting.js';
-import db from './src/data/database.js';
+import { createJournalEntry, createBusiness } from './src/logic/writesToDb.js';
+import { getAllBusiness } from './src/logic/readsFromDb.js';
 
+const { initializeDatabase, db } = db_pkg;
 initializeDatabase();
 
 // This piece of code below is just for testing
@@ -71,5 +72,30 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+ipcMain.handle('get-all-business', () => {
+  try {
+    const get = getAllBusiness();
+    return get;
+  } catch (err) {
+    console.error("Error: ", err);
+  }
+});
+
+ipcMain.handle('add-business', (event, business) => {
+  try {
+    const businessPayload = {
+      businessName: business.BusinessName,
+      ownerName: business.OwnerName,
+      periodStart: business.PeriodStart,
+      periodEnd: business.PeriodEnd
+    };
+
+    const result = createBusiness(businessPayload);
+    return { didFail: false, message: result };
+  } catch (error) {
+    return { didFail: true, message: error.message };
   }
 });

@@ -1,6 +1,6 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import { app, BrowserWindow } from 'electron';
+const Database = require('better-sqlite3');
+const path = require('path');
+const { app } = require('electron');
 
 // Get root app path
 const dbPath = process.type === 'browser' || (app && typeof app.getPath === 'function')
@@ -15,6 +15,7 @@ const createTableQuery = `
   CREATE TABLE IF NOT EXISTS Business (
       BusinessID INTEGER PRIMARY KEY AUTOINCREMENT,
       BusinessName TEXT NOT NULL,
+      OwnerName TEXT NOT NULL,
       PeriodStart TEXT NOT NULL,
       PeriodEnd TEXT NOT NULL
   );
@@ -89,7 +90,7 @@ const createTableQuery = `
   );
 `;
 
-export function initializeDatabase() {
+function initializeDatabase() {
   // Seed Default Business Profile & Chart of Accounts if empty
   db.exec(createTableQuery);
   seedDefaultData();
@@ -101,10 +102,10 @@ function seedDefaultData() {
   
   if (businessCount === 0) {
     const insertBusiness = db.prepare(`
-      INSERT INTO Business (BusinessName, PeriodStart, PeriodEnd) 
-      VALUES (?, ?, ?)
+      INSERT INTO Business (BusinessName, OwnerName, PeriodStart, PeriodEnd) 
+      VALUES (?, ?, ?, ?)
     `);
-    const info = insertBusiness.run('EZFinanceManager Sample Business', '2026-01-01', '2026-12-31');
+    const info = insertBusiness.run('EZFinanceManager Sample Business', 'Rivera', '2026-01-01', '2026-12-31');
     const defaultBusinessID = info.lastInsertRowid;
 
     // Pre-seeded Chart of Accounts from your team leader's outline
@@ -176,4 +177,8 @@ function seedDefaultData() {
   }
 }
 
-export default db;
+//export default db;
+module.exports = {
+  initializeDatabase,
+  db
+};
