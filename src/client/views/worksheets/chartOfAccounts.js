@@ -5,6 +5,8 @@ const { ipcRenderer } = require('electron');
 const control = {};
 
 control.name = 'chart-of-accounts';
+control.accounts = null;
+control.activeClassification = '';
 
 control.render = () => {
 	return renderWorkspaceLayout(
@@ -21,12 +23,12 @@ control.render = () => {
 			</div>
 
 			<div class="coa-filters">
-				<button type="button" class="is-active">All</button>
-				<button type="button">Assets</button>
-				<button type="button">Liabilities</button>
-				<button type="button">Equity</button>
-				<button type="button">Income</button>
-				<button type="button">Expenses</button>
+				<button type="button" class="is-active" data-classification="">All</button>
+				<button type="button" data-classification="Asset">Assets</button>
+				<button type="button" data-classification="Liability">Liabilities</button>
+				<button type="button" data-classification="Owners Equity">Equity</button>
+				<button type="button" data-classification="Income">Income</button>
+				<button type="button" data-classification="Expenses">Expenses</button>
 			</div>
 
 			<div class="coa-table-wrap">
@@ -299,6 +301,16 @@ control.init = () => {
 			`Are you sure you want to delete ${control.selectedAccountIDs.length} selected account(s)?`;
 		deleteModal.classList.add("is-active");
 	});
+
+	const classificationButtons = document.querySelectorAll(`#${control.name} .coa-filters button[data-classification]`);
+	classificationButtons.forEach((button) => {
+		button.addEventListener('click', (e) => {
+			classificationButtons.forEach((other) => other.classList.remove('is-active'));
+			button.classList.add('is-active');
+			control.activeClassification = button.dataset.classification;
+			control.renderAccountRows(control.accounts);
+		});
+	});
 };
 
 control.openAccountModal = (account) => {
@@ -319,15 +331,17 @@ control.openAccountModal = (account) => {
 
 control.openEditAccount = (account) => control.openAccountModal(account);
 
-control.fetchAccounts = async () => {
+control.renderAccountRows = (accounts) => {
 	const accountsTable = document.getElementById("accountsTable");
-	if (getBusinessId() < 0) return;
+	if (!accounts) return;
 
-	const getAllAccounts = await ipcRenderer.invoke('get-all-accounts', getBusinessId());
-	if (getAllAccounts.didFail) return getAllAccounts;
-	
+	let displayedAccounts = accounts;
+	if (control.activeClassification) {
+		displayedAccounts = accounts.filter(account => account.AccountType === control.activeClassification);
+	}
+
 	accountsTable.innerHTML = "";
-	for (const account of getAllAccounts.message) {
+	for (const account of displayedAccounts) {
 		const tr = document.createElement('tr');
 		const tabular_nums_ = document.createElement('td');
 		const checkbox = document.createElement('input');
@@ -359,6 +373,16 @@ control.fetchAccounts = async () => {
 		tr.append(tabular_nums_, title_, class_, normal_);
 		accountsTable.appendChild(tr);
 	}
+};
+
+control.fetchAccounts = async () => {
+	if (getBusinessId() < 0) return;
+
+	const getAllAccounts = await ipcRenderer.invoke('get-all-accounts', getBusinessId());
+	if (getAllAccounts.didFail) return getAllAccounts;
+
+	control.accounts = getAllAccounts.message;
+	control.renderAccountRows(control.accounts);
 };
 
 export default control;
