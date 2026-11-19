@@ -15,6 +15,8 @@ import { default as balanceSheet } from './views/worksheets/balanceSheet.js';
 import { default as closingEntries } from './views/worksheets/closingEntries.js';
 import { default as pcbt } from './views/worksheets/pcbt.js';
 
+const CURRENT_BUSINESS_ID = "current_business_id";
+
 const pages = [
 	notFound,
 	mainMenu,
@@ -55,6 +57,16 @@ export function loadPage (name) {
 		pageElement.style.display = 'block';
 	}
 }
+
+export function setBusinessId (number) {
+	localStorage.setItem(CURRENT_BUSINESS_ID, number)
+}
+export function getBusinessId () {
+	return localStorage.getItem(CURRENT_BUSINESS_ID);
+}
+
+// Global variables
+localStorage.setItem(CURRENT_BUSINESS_ID, -1);
 
 // sum app all dom elements
 for (const page of pages) {

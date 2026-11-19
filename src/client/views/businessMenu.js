@@ -1,4 +1,5 @@
-import { loadPage } from "../renderer.js";
+import { loadPage, setBusinessId } from "../renderer.js";
+import { default as chartOfAccounts } from "./worksheets/chartOfAccounts.js";
 const { ipcRenderer } = require('electron');
 
 const control = {};
@@ -89,7 +90,9 @@ control.init = () => {
 				businessItemContainer.appendChild(itemElement);
 
 				button.addEventListener('click', (e) => {
+					setBusinessId(business.BusinessID);
 					loadPage('chart-of-accounts');
+					chartOfAccounts.fetchAccounts();
 				});
 			}
 		} catch (err) {

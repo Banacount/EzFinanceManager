@@ -2,7 +2,7 @@ import db_pkg from './src/data/database.cjs';
 import { app, BrowserWindow, ipcMain } from 'electron/main';
 import path from 'path';
 import { createJournalEntry, createBusiness } from './src/logic/writesToDb.js';
-import { getAllBusiness } from './src/logic/readsFromDb.js';
+import { getAllBusiness, getAccounts } from './src/logic/readsFromDb.js';
 
 const { initializeDatabase, db } = db_pkg;
 initializeDatabase();
@@ -75,12 +75,24 @@ app.on('window-all-closed', () => {
   }
 });
 
+// IPC HANDLERS
 ipcMain.handle('get-all-business', () => {
   try {
     const get = getAllBusiness();
     return get;
   } catch (err) {
-    console.error("Error: ", err);
+    console.error(err);
+  }
+});
+
+ipcMain.handle('get-all-accounts', (event, businessID) => {
+  try {
+    if (!businessID) throw new Error("The Business ID is blank.");
+
+    const get = getAccounts(businessID);
+    return { didFail: false, message: get };
+  } catch (err) {
+    return { didFail: true, message: err };
   }
 });
 
@@ -99,3 +111,4 @@ ipcMain.handle('add-business', (event, business) => {
     return { didFail: true, message: error.message };
   }
 });
+

@@ -1,4 +1,6 @@
+import { getBusinessId } from '../../renderer.js';
 import { initWorkspaceNav, renderWorkspaceLayout } from '../workspaceHeader.js';
+const { ipcRenderer } = require('electron');
 
 const control = {};
 
@@ -35,7 +37,7 @@ control.render = () => {
 							<th class="col-normal">Normal balance</th>
 						</tr>
 					</thead>
-					<tbody>
+					<tbody id="accountsTable">
 						<tr>
 							<td class="col-no tabular-nums">110</td>
 							<td class="col-title">Cash</td>
@@ -117,6 +119,36 @@ control.render = () => {
 
 control.init = () => {
 	initWorkspaceNav(control.name);
+};
+
+control.fetchAccounts = async () => {
+	const accountsTable = document.getElementById("accountsTable");
+	if (getBusinessId() < 0) return;
+
+	const getAllAccounts = await ipcRenderer.invoke('get-all-accounts', getBusinessId());
+	if (getAllAccounts.didFail) return getAllAccounts;
+	
+	accountsTable.innerHTML = "";
+	for (const account of getAllAccounts.message) {
+		const tr = document.createElement('tr');
+		const tabular_nums_ = document.createElement('td');
+		const title_ = document.createElement('td');
+		const class_ = document.createElement('td');
+		const normal_ = document.createElement('td');
+
+		tabular_nums_.className = 'col-no tabular-nums';
+		title_.className = 'col-title';
+		class_.className = 'col-class';
+		normal_.className = 'col-normal';
+
+		tabular_nums_.textContent  = account.AccountCode;
+		title_.textContent = account.AccountName;
+		class_.textContent = account.AccountType;
+		normal_.textContent = account.NormalBalance;
+
+		tr.append(tabular_nums_, title_, class_, normal_);
+		accountsTable.appendChild(tr);
+	}
 };
 
 export default control;

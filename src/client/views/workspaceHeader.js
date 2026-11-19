@@ -30,7 +30,7 @@ export function renderWorkspaceLayout(activePageName, contentHtml) {
 
 				<div class="menubar">
 					<button type="button" class="menu-trigger-btn" data-page="main-menu">Menu</button>
-					<button type="button" class="menu-trigger-btn" data-page="business-menu">File</button>
+					<button type="button" class="menu-trigger-btn" data-page="business-menu">Go back</button>
 					<button type="button" class="menu-trigger-btn">Options</button>
 				</div>
 
