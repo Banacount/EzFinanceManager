@@ -2,8 +2,15 @@ name: Build App
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
+    inputs:
+      target:
+        description: 'Target platform'
+        required: false
+        default: 'win'
+        type: choice
+        options:
+          - win
+          - linux
 
 jobs:
   build-windows:

@@ -19,3 +19,31 @@ export function getAccounts(businessID) {
   // .all() returns an array of matching rows
   return stmt.all(businessID);
 }
+
+export function getJournalEntries(businessID) {
+  const stmt = db.prepare(`
+    SELECT * FROM JournalEntries 
+    WHERE BusinessID = ?
+    ORDER BY EntryDate ASC, EntryID ASC
+  `);
+
+  const entries = stmt.all(businessID);
+
+  const stmtLines = db.prepare(`
+    SELECT 
+      JournalLines.*,
+      Accounts.AccountCode,
+      Accounts.AccountName,
+      Accounts.AccountType
+    FROM JournalLines
+    INNER JOIN Accounts ON JournalLines.AccountID = Accounts.AccountID
+    WHERE JournalLines.EntryID = ?
+    ORDER BY JournalLines.LineID ASC
+  `);
+
+  for (const entry of entries) {
+    entry.lines = stmtLines.all(entry.EntryID);
+  }
+
+  return entries;
+}

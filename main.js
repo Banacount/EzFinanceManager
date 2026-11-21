@@ -2,7 +2,7 @@ import db_pkg from './src/data/database.cjs';
 import { app, BrowserWindow, ipcMain } from 'electron/main';
 import path from 'path';
 import { createJournalEntry, createBusiness, editAccount, deleteBusiness, createAccount, deleteAccounts } from './src/logic/writesToDb.js';
-import { getAllBusiness, getAccounts } from './src/logic/readsFromDb.js';
+import { getAllBusiness, getAccounts, getJournalEntries } from './src/logic/readsFromDb.js';
 
 const { initializeDatabase, db } = db_pkg;
 initializeDatabase();
@@ -96,6 +96,17 @@ ipcMain.handle('get-all-accounts', (event, businessID) => {
   }
 });
 
+ipcMain.handle('get-journal-entries', (event, businessID) => {
+  try {
+    if (!businessID) throw new Error("The Business ID is blank.");
+
+    const get = getJournalEntries(businessID);
+    return { didFail: false, message: get };
+  } catch (err) {
+    return { didFail: true, message: err.message };
+  }
+});
+
 ipcMain.handle('add-business', (event, business) => {
   try {
     const businessPayload = {
@@ -168,6 +179,29 @@ ipcMain.handle('delete-accounts', (event, selection) => {
     };
 
     const result = deleteAccounts(selectionPayload);
+    return { didFail: false, message: result };
+  } catch (error) {
+    return { didFail: true, message: error.message };
+  }
+});
+
+ipcMain.handle('add-journal-entry', (event, entry) => {
+  try {
+    const entryPayload = {
+      businessID: Number(entry.BusinessID),
+      entryDate: entry.EntryDate,
+      referenceNo: entry.ReferenceNo,
+      description: entry.Description,
+      createdBy: entry.CreatedBy,
+      lines: entry.Lines.map((line) => ({
+        journalNote: line.JournalNote,
+        accountID: Number(line.AccountID),
+        debit: Number(line.Debit),
+        credit: Number(line.Credit)
+      }))
+    };
+
+    const result = createJournalEntry(entryPayload);
     return { didFail: false, message: result };
   } catch (error) {
     return { didFail: true, message: error.message };

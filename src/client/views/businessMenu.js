@@ -1,5 +1,6 @@
 import { loadPage, setBusinessId } from "../renderer.js";
 import { default as chartOfAccounts } from "./worksheets/chartOfAccounts.js";
+import { default as journalEntries } from "./worksheets/journalEntries.js";
 const { ipcRenderer } = require('electron');
 
 const control = {};
@@ -158,6 +159,7 @@ control.init = () => {
 					setBusinessId(business.BusinessID);
 					loadPage('chart-of-accounts');
 					chartOfAccounts.fetchAccounts();
+					journalEntries.fetchJournalEntries();
 				});
 
 				deleteButton.addEventListener('click', (e) => openDeleteModal(business));
