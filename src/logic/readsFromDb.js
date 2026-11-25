@@ -68,3 +68,53 @@ export function getPostedJournalLines(businessID) {
 
   return stmt.all(businessID);
 }
+
+export function getAdjustments(businessID) {
+  const stmt = db.prepare(`
+    SELECT * FROM Adjustments
+    WHERE BusinessID = ? AND Status = 'POSTED'
+    ORDER BY AdjustmentDate ASC, AdjustmentID ASC
+  `);
+
+  const adjustments = stmt.all(businessID);
+
+  const stmtLines = db.prepare(`
+    SELECT
+      AdjustmentLines.*,
+      Accounts.AccountCode,
+      Accounts.AccountName,
+      Accounts.AccountType
+    FROM AdjustmentLines
+    INNER JOIN Accounts ON AdjustmentLines.AccountID = Accounts.AccountID
+    WHERE AdjustmentLines.AdjustmentID = ?
+    ORDER BY AdjustmentLines.LineID ASC
+  `);
+
+  for (const adjustment of adjustments) {
+    adjustment.lines = stmtLines.all(adjustment.AdjustmentID);
+  }
+
+  return adjustments;
+}
+
+export function getPostedAdjustmentLines(businessID) {
+  const stmt = db.prepare(`
+    SELECT
+      AdjustmentLines.*,
+      Adjustments.AdjustmentDate,
+      Adjustments.ReferenceNo,
+      Adjustments.AdjustmentType,
+      Adjustments.Description,
+      Accounts.AccountCode,
+      Accounts.AccountName,
+      Accounts.AccountType,
+      Accounts.NormalBalance
+    FROM AdjustmentLines
+    INNER JOIN Adjustments ON AdjustmentLines.AdjustmentID = Adjustments.AdjustmentID
+    INNER JOIN Accounts ON AdjustmentLines.AccountID = Accounts.AccountID
+    WHERE Adjustments.BusinessID = ? AND Adjustments.Status = 'POSTED'
+    ORDER BY Adjustments.AdjustmentDate ASC, Adjustments.AdjustmentID ASC, AdjustmentLines.LineID ASC
+  `);
+
+  return stmt.all(businessID);
+}

@@ -5,6 +5,11 @@ import { default as ledger } from "./worksheets/ledger.js";
 import { default as ujbt } from "./worksheets/ujbt.js";
 import { default as balanceSheet } from "./worksheets/balanceSheet.js";
 import { default as incomeStatement } from "./worksheets/incomeStatement.js";
+import { default as aje } from "./worksheets/aje.js";
+import { default as ajtb } from "./worksheets/ajtb.js";
+import { default as closingEntries } from "./worksheets/closingEntries.js";
+import { default as pcbt } from "./worksheets/pcbt.js";
+import { default as worksheet } from "./worksheet.js";
 import { updateWorkspaceTitle } from "./workspaceHeader.js";
 const { ipcRenderer } = require('electron');
 
@@ -169,8 +174,13 @@ control.init = () => {
 					journalEntries.fetchJournalEntries();
 					ledger.fetchLedgerLines();
 					ujbt.fetchTrialBalanceLines();
-					balanceSheet.fetchBalanceSheetLines();
+					aje.fetchAdjustments();
+					ajtb.fetchAdjustedTrialBalanceLines();
 					incomeStatement.fetchIncomeStatementLines();
+					balanceSheet.fetchBalanceSheetLines();
+					closingEntries.fetchClosingEntries();
+					pcbt.fetchPostClosingLines();
+					worksheet.fetchWorksheetLines();
 				});
 
 				deleteButton.addEventListener('click', (e) => openDeleteModal(business));

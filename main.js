@@ -1,8 +1,8 @@
 import db_pkg from './src/data/database.cjs';
 import { app, BrowserWindow, ipcMain } from 'electron/main';
 import path from 'path';
-import { createJournalEntry, voidJournalEntry, createBusiness, editAccount, deleteBusiness, createAccount, deleteAccounts } from './src/logic/writesToDb.js';
-import { getAllBusiness, getAccounts, getJournalEntries, getPostedJournalLines } from './src/logic/readsFromDb.js';
+import { createJournalEntry, createAdjustment, voidJournalEntry, createBusiness, editAccount, deleteBusiness, createAccount, deleteAccounts } from './src/logic/writesToDb.js';
+import { getAllBusiness, getAccounts, getJournalEntries, getPostedJournalLines, getAdjustments, getPostedAdjustmentLines } from './src/logic/readsFromDb.js';
 
 const { initializeDatabase, db } = db_pkg;
 initializeDatabase();
@@ -244,6 +244,54 @@ ipcMain.handle('get-posted-journal-lines', (event, businessID) => {
 
     const get = getPostedJournalLines(businessID);
     return { didFail: false, message: get };
+  } catch (error) {
+    return { didFail: true, message: error.message };
+  }
+});
+
+ipcMain.handle('get-adjustments', (event, businessID) => {
+  try {
+    if (!businessID) throw new Error("The Business ID is blank.");
+
+    const get = getAdjustments(businessID);
+    return { didFail: false, message: get };
+  } catch (error) {
+    return { didFail: true, message: error.message };
+  }
+});
+
+ipcMain.handle('get-posted-adjustment-lines', (event, businessID) => {
+  try {
+    if (!businessID) throw new Error("The Business ID is blank.");
+
+    const get = getPostedAdjustmentLines(businessID);
+    return { didFail: false, message: get };
+  } catch (error) {
+    return { didFail: true, message: error.message };
+  }
+});
+
+ipcMain.handle('add-adjustment', (event, adjustment) => {
+  try {
+    if (!adjustment.ReferenceNo) throw new Error("No reference number.");
+    if (!adjustment.Description) throw new Error("No description.");
+
+    const adjustmentPayload = {
+      businessID: Number(adjustment.BusinessID),
+      adjustmentDate: adjustment.AdjustmentDate,
+      referenceNo: adjustment.ReferenceNo,
+      adjustmentType: adjustment.AdjustmentType,
+      description: adjustment.Description,
+      createdBy: adjustment.CreatedBy,
+      lines: adjustment.Lines.map((line) => ({
+        accountID: Number(line.AccountID),
+        debit: Number(line.Debit),
+        credit: Number(line.Credit)
+      }))
+    };
+
+    const result = createAdjustment(adjustmentPayload);
+    return { didFail: false, message: result };
   } catch (error) {
     return { didFail: true, message: error.message };
   }

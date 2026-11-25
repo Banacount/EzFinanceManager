@@ -1,5 +1,5 @@
 import db_pkg from '../data/database.cjs';
-import { TransactionPayloadSchema, JournalEntryVoidSchema, BusinessSchema, AccountEditSchema, BusinessDeleteSchema, AccountAddSchema, AccountsDeleteSchema } from './schemas.js';
+import { TransactionPayloadSchema, AdjustmentPayloadSchema, JournalEntryVoidSchema, BusinessSchema, AccountEditSchema, BusinessDeleteSchema, AccountAddSchema, AccountsDeleteSchema } from './schemas.js';
 
 const { db } = db_pkg;
 
@@ -122,6 +122,64 @@ export function voidJournalEntry(payload) {
     const voidedEntryID = voidEntryTx();
     return { success: true, entryID: voidedEntryID, message: "Journal entry voided successfully." };
   } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * Validates, processes, and saves an adjusting entry with double-entry checking.
+ */
+export function createAdjustment(payload) {
+  const validationResult = AdjustmentPayloadSchema.safeParse(payload);
+  if (!validationResult.success) {
+    const errorMessages = validationResult.error.issues.map(err => err.message).join(', ');
+    throw new Error(`Validation Error: ${errorMessages}`);
+  }
+
+  const { businessID, adjustmentDate, referenceNo, adjustmentType, description, createdBy, status, lines } = validationResult.data;
+
+  let totalDebits = 0;
+  let totalCredits = 0;
+  for (const line of lines) {
+    totalDebits += line.debit;
+    totalCredits += line.credit;
+  }
+
+  if (totalDebits !== totalCredits) {
+    throw new Error(`Unbalanced Entry Error: Total debits (${totalDebits}) must equal total credits (${totalCredits}).`);
+  }
+
+  const insertTransaction = db.transaction(() => {
+    const headerResult = db.prepare(`
+      INSERT INTO Adjustments (BusinessID, AdjustmentDate, ReferenceNo, AdjustmentType, Description, Status, CreatedAt, CreatedBy)
+      VALUES (?, ?, ?, ?, ?, ?, datetime('now'), ?)
+    `).run(businessID, adjustmentDate, referenceNo, adjustmentType, description, status, createdBy);
+
+    const adjustmentID = headerResult.lastInsertRowid;
+    const stmtLine = db.prepare(`
+      INSERT INTO AdjustmentLines (AdjustmentID, AccountID, Debit, Credit)
+      VALUES (?, ?, ?, ?)
+    `);
+
+    for (const line of lines) {
+      stmtLine.run(adjustmentID, line.accountID, line.debit, line.credit);
+    }
+
+    db.prepare(`
+      INSERT INTO AuditTrail (TableName, RecordID, Action, OldValue, NewValue, ActionDate, UserName)
+      VALUES ('Adjustments', ?, 'INSERT', NULL, ?, datetime('now'), ?)
+    `).run(adjustmentID, JSON.stringify({ referenceNo, adjustmentType, description, totalDebits, status }), createdBy);
+
+    return adjustmentID;
+  });
+
+  try {
+    const adjustmentID = insertTransaction();
+    return { success: true, adjustmentID, message: "Adjusting entry successfully recorded." };
+  } catch (error) {
+    if (error.message.includes('UNIQUE constraint failed')) {
+      throw new Error(`Reference number '${referenceNo}' already exists. Reference numbers must be unique.`);
+    }
     throw error;
   }
 }

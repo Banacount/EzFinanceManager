@@ -7,13 +7,13 @@
 - [x] Work: journal entries
 - [x] Work: ledger
 - [x] Work: ujbt
-- [ ] Work: aje
-- [ ] Work: ajtb
-- [ ] Work: income statement
-- [ ] Work: balance sheet
-- [ ] Work: closing entries
-- [ ] Work: pcbt
-- [ ] Work: worksheet
+- [x] Work: aje
+- [x] Work: ajtb
+- [x] Work: income statement
+- [x] Work: balance sheet
+- [x] Work: closing entries
+- [x] Work: pcbt
+- [x] Work: worksheet
 - [ ] Settings menu controls.
 
 ---

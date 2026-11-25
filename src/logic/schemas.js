@@ -23,6 +23,17 @@ export const TransactionPayloadSchema = z.object({
   lines: z.array(JournalLineSchema).min(2, "An entry must have at least two account lines")
 });
 
+export const AdjustmentPayloadSchema = z.object({
+  businessID: z.number().int().positive("Invalid Business ID"),
+  adjustmentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
+  referenceNo: z.string().min(1, "Reference number is required"),
+  adjustmentType: z.enum(['Deferral', 'Accrual', 'Depreciation']),
+  description: z.string().min(1, "Description is required"),
+  createdBy: z.string().min(1, "Creator username is required"),
+  status: z.enum(['DRAFT', 'POSTED']).default('POSTED'),
+  lines: z.array(JournalLineSchema).min(2, "An adjustment must have at least two account lines")
+});
+
 export const JournalEntryVoidSchema = z.object({
   businessID: z.number().int().positive("Invalid Business ID"),
   entryID: z.number().int().positive("Invalid Entry ID"),

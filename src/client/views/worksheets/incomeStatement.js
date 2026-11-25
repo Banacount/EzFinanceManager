@@ -1,5 +1,6 @@
+import { getBusinessName } from '../../renderer.js';
 import { initWorkspaceNav, renderWorkspaceLayout } from '../workspaceHeader.js';
-import { fetchPostedJournalLines, formatAmount, groupAccountLines, signedBalance } from './reportData.js';
+import { fetchAdjustedLines, formatAmount, groupAccountLines, printReport, signedBalance } from './reportData.js';
 
 const control = {};
 
@@ -16,7 +17,7 @@ control.render = () => {
 					<p class="coa-subtitle">Juan’s Bakery · For the month ended Jan 31, 2026</p>
 				</div>
 				<div class="coa-actions">
-					<button type="button" class="coa-secondary-btn">Export PDF</button>
+					<button type="button" class="coa-secondary-btn" id="printIncomeStatementBtn">Export PDF</button>
 				</div>
 			</div>
 
@@ -37,10 +38,18 @@ control.render = () => {
 
 control.init = () => {
 	initWorkspaceNav(control.name);
+	document.getElementById("printIncomeStatementBtn").addEventListener("click", () => printReport());
+};
+
+control.updateSubtitle = () => {
+	const subtitle = document.querySelector(`#${control.name} .coa-subtitle`);
+	if (subtitle) {
+		subtitle.textContent = `${getBusinessName() || 'Business'} · For the month ended Jan 31, 2026`;
+	}
 };
 
 control.fetchIncomeStatementLines = async () => {
-	const lines = await fetchPostedJournalLines();
+	const lines = await fetchAdjustedLines();
 	if (!lines) return;
 
 	control.lines = lines;
@@ -50,6 +59,7 @@ control.fetchIncomeStatementLines = async () => {
 control.renderIncomeStatement = () => {
 	const tableBody = document.getElementById("incomeStatementRows");
 	tableBody.innerHTML = "";
+	control.updateSubtitle();
 
 	const accounts = groupAccountLines(control.lines).map((account) => ({
 		...account,

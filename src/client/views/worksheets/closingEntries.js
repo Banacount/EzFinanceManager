@@ -1,8 +1,11 @@
+import { getBusinessName } from '../../renderer.js';
 import { initWorkspaceNav, renderWorkspaceLayout } from '../workspaceHeader.js';
+import { buildClosingEntries, fetchAdjustedLines, formatAmount, groupAccountLines } from './reportData.js';
 
 const control = {};
 
 control.name = 'closing-entries';
+control.entries = [];
 
 control.render = () => {
 	return renderWorkspaceLayout(
@@ -14,7 +17,7 @@ control.render = () => {
 					<p class="coa-subtitle">Juan’s Bakery · Period end Jan 31, 2026</p>
 				</div>
 				<div class="coa-actions">
-					<button type="button" class="coa-primary-btn">Generate closing +</button>
+					<button type="button" class="coa-primary-btn" id="generateClosingBtn">Generate closing +</button>
 				</div>
 			</div>
 
@@ -29,78 +32,7 @@ control.render = () => {
 							<th class="text-right">Credit</th>
 						</tr>
 					</thead>
-					<tbody>
-						<tr>
-							<td class="col-no mono-nums">2026-01-31</td>
-							<td class="col-title">Service fee</td>
-							<td>Close Revenue</td>
-							<td class="text-right mono-nums">62,500.00</td>
-							<td class="text-right mono-nums"></td>
-						</tr>
-						<tr>
-							<td class="col-no"></td>
-							<td class="col-title indent-credit">Income summary</td>
-							<td></td>
-							<td class="text-right mono-nums"></td>
-							<td class="text-right mono-nums">62,500.00</td>
-						</tr>
-						<tr>
-							<td class="col-no mono-nums">2026-01-31</td>
-							<td class="col-title">Income summary</td>
-							<td>Close Expenses</td>
-							<td class="text-right mono-nums">31,850.00</td>
-							<td class="text-right mono-nums"></td>
-						</tr>
-						<tr>
-							<td class="col-no"></td>
-							<td class="col-title indent-credit">Salaries expense</td>
-							<td></td>
-							<td class="text-right mono-nums"></td>
-							<td class="text-right mono-nums">18,500.00</td>
-						</tr>
-						<tr>
-							<td class="col-no"></td>
-							<td class="col-title indent-credit">Rent expense</td>
-							<td></td>
-							<td class="text-right mono-nums"></td>
-							<td class="text-right mono-nums">12,000.00</td>
-						</tr>
-						<tr>
-							<td class="col-no"></td>
-							<td class="col-title indent-credit">Depreciation expense</td>
-							<td></td>
-							<td class="text-right mono-nums"></td>
-							<td class="text-right mono-nums">1,350.00</td>
-						</tr>
-						<tr>
-							<td class="col-no mono-nums">2026-01-31</td>
-							<td class="col-title">Income summary</td>
-							<td>Close Net Income</td>
-							<td class="text-right mono-nums">30,650.00</td>
-							<td class="text-right mono-nums"></td>
-						</tr>
-						<tr>
-							<td class="col-no"></td>
-							<td class="col-title indent-credit">Owner’s capital</td>
-							<td></td>
-							<td class="text-right mono-nums"></td>
-							<td class="text-right mono-nums">30,650.00</td>
-						</tr>
-						<tr>
-							<td class="col-no mono-nums">2026-01-31</td>
-							<td class="col-title">Owner’s capital</td>
-							<td>Close Drawings</td>
-							<td class="text-right mono-nums">5,000.00</td>
-							<td class="text-right mono-nums"></td>
-						</tr>
-						<tr>
-							<td class="col-no"></td>
-							<td class="col-title indent-credit"><span>Owner’s drawings</span><span class="contra-tag">contra</span></td>
-							<td></td>
-							<td class="text-right mono-nums"></td>
-							<td class="text-right mono-nums">5,000.00</td>
-						</tr>
-					</tbody>
+					<tbody id="closingEntriesRows"></tbody>
 				</table>
 			</div>
 		`,
@@ -109,6 +41,64 @@ control.render = () => {
 
 control.init = () => {
 	initWorkspaceNav(control.name);
+	document.getElementById("generateClosingBtn").addEventListener("click", () => control.fetchClosingEntries());
+};
+
+control.updateSubtitle = () => {
+	const subtitle = document.querySelector(`#${control.name} .coa-subtitle`);
+	if (subtitle) {
+		subtitle.textContent = `${getBusinessName() || 'Business'} · Period end Jan 31, 2026`;
+	}
+};
+
+control.fetchClosingEntries = async () => {
+	const lines = await fetchAdjustedLines();
+	if (!lines) return;
+
+	control.entries = buildClosingEntries(groupAccountLines(lines));
+	control.renderClosingEntries();
+};
+
+control.renderClosingEntries = () => {
+	const tableBody = document.getElementById("closingEntriesRows");
+	tableBody.innerHTML = "";
+	control.updateSubtitle();
+
+	if (control.entries.length === 0) {
+		const tr = document.createElement('tr');
+		const empty_ = document.createElement('td');
+		empty_.colSpan = 5;
+		empty_.textContent = "No temporary accounts to close.";
+		tr.appendChild(empty_);
+		tableBody.appendChild(tr);
+		return;
+	}
+
+	for (const entry of control.entries) {
+		entry.lines.forEach((line, index) => {
+			const tr = document.createElement('tr');
+			const date_ = document.createElement('td');
+			const particulars_ = document.createElement('td');
+			const step_ = document.createElement('td');
+			const debit_ = document.createElement('td');
+			const credit_ = document.createElement('td');
+
+			date_.className = 'col-no mono-nums';
+			particulars_.className = 'col-title';
+			if (index > 0) particulars_.classList.add('indent-credit');
+			debit_.className = 'text-right mono-nums';
+			credit_.className = 'text-right mono-nums';
+
+			date_.textContent = index === 0 ? entry.date : "";
+			particulars_.textContent = line.accountName;
+			step_.textContent = index === 0 ? entry.step : "";
+			debit_.textContent = line.debit > 0 ? formatAmount(line.debit) : "";
+			credit_.textContent = line.credit > 0 ? formatAmount(line.credit) : "";
+
+			tr.append(date_, particulars_, step_, debit_, credit_);
+			tableBody.appendChild(tr);
+		});
+	}
 };
 
 export default control;

@@ -1,6 +1,6 @@
 import { getBusinessName } from '../../renderer.js';
 import { initWorkspaceNav, renderWorkspaceLayout } from '../workspaceHeader.js';
-import { balanceBySide, fetchPostedJournalLines, formatAmount, groupAccountLines } from './reportData.js';
+import { balanceBySide, fetchPostedJournalLines, formatAmount, groupAccountLines, printReport } from './reportData.js';
 
 const control = {};
 
@@ -40,11 +40,7 @@ control.render = () => {
 
 control.init = () => {
 	initWorkspaceNav(control.name);
-	document.getElementById("printUjbtBtn").addEventListener("click", (e) => {
-		document.body.classList.add("printing-ujbt");
-		window.addEventListener("afterprint", () => document.body.classList.remove("printing-ujbt"), { once: true });
-		window.print();
-	});
+	document.getElementById("printUjbtBtn").addEventListener("click", () => printReport());
 };
 
 control.updateSubtitle = () => {
