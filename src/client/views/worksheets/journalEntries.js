@@ -9,6 +9,7 @@ control.entries = null;
 control.activeFilter = '';
 control.activeSearch = '';
 control.modalAccounts = [];
+control.voidingEntryID = null;
 
 const formatAmount = (amount) => (amount / 100).toLocaleString('en-US', {
 	minimumFractionDigits: 2,
@@ -60,7 +61,7 @@ control.render = () => {
 			</div>
 
 			<div class="coa-table-wrap">
-				<table class="coa-table">
+				<table class="coa-table je-entry-table">
 					<thead>
 						<tr>
 							<th class="col-no">Date</th>
@@ -68,6 +69,7 @@ control.render = () => {
 							<th>Ref</th>
 							<th class="text-right">Debit</th>
 							<th class="text-right">Credit</th>
+							<th>Action</th>
 						</tr>
 					</thead>
 					<tbody id="journalEntriesTable">
@@ -77,6 +79,7 @@ control.render = () => {
 							<td class="tabular-nums">110</td>
 							<td class="text-right mono-nums">150,000.00</td>
 							<td class="text-right mono-nums"></td>
+							<td></td>
 						</tr>
 						<tr>
 							<td class="col-no"></td>
@@ -84,10 +87,11 @@ control.render = () => {
 							<td class="tabular-nums">310</td>
 							<td class="text-right mono-nums"></td>
 							<td class="text-right mono-nums">150,000.00</td>
+							<td></td>
 						</tr>
 						<tr class="entry-note">
 							<td></td>
-							<td colspan="4">Initial owner investment into Juan’s Bakery</td>
+							<td colspan="5">Initial owner investment into Juan’s Bakery</td>
 						</tr>
 					</tbody>
 				</table>
@@ -134,6 +138,25 @@ control.render = () => {
 					</div>
 				</div>
 			</div>
+
+			<div class="coa-edit-modal coa-delete-modal je-void-modal" id="journalVoidModal">
+				<div class="coa-edit-modal-backdrop" id="journalVoidBackdrop"></div>
+				<div class="coa-edit-modal-panel" role="dialog" aria-modal="true" aria-labelledby="journalVoidTitle">
+					<div class="coa-edit-modal-header">
+						<h3 id="journalVoidTitle">Void journal entry</h3>
+						<button type="button" class="coa-edit-modal-close" id="journalVoidCloseBtn">&times;</button>
+					</div>
+
+					<div class="coa-edit-modal-body">
+						<p id="journalVoidMessage">Are you sure you want to void this journal entry?</p>
+					</div>
+
+					<div class="coa-edit-modal-footer">
+						<button type="button" class="coa-edit-modal-secondary-btn" id="journalVoidCancelBtn">Cancel</button>
+						<button type="button" class="coa-edit-modal-primary-btn" id="journalVoidConfirmBtn">Void entry</button>
+					</div>
+				</div>
+			</div>
 		`,
 	);
 };
@@ -143,15 +166,49 @@ control.init = () => {
 
 	const entryModal = document.getElementById("journalEntryModal");
 	const saveBtn = document.getElementById("journalEntrySaveBtn");
+	const voidModal = document.getElementById("journalVoidModal");
+	const voidConfirmBtn = document.getElementById("journalVoidConfirmBtn");
 
 	const closeEntryModal = () => {
 		entryModal.classList.remove("is-active");
+	};
+
+	const closeVoidModal = () => {
+		voidModal.classList.remove("is-active");
 	};
 
 	document.getElementById("journalEntryCloseBtn").addEventListener("click", closeEntryModal);
 	document.getElementById("journalEntryCancelBtn").addEventListener("click", closeEntryModal);
 	document.getElementById("journalEntryBackdrop").addEventListener("click", closeEntryModal);
 	document.getElementById("addJournalLineBtn").addEventListener("click", (e) => control.addJournalLine(control.modalAccounts));
+
+	document.getElementById("journalVoidCloseBtn").addEventListener("click", closeVoidModal);
+	document.getElementById("journalVoidCancelBtn").addEventListener("click", closeVoidModal);
+	document.getElementById("journalVoidBackdrop").addEventListener("click", closeVoidModal);
+
+	voidConfirmBtn.addEventListener("click", async (e) => {
+		const voidEntry = {
+			BusinessID: getBusinessId(),
+			EntryID: control.voidingEntryID,
+			VoidedBy: "System"
+		};
+
+		voidConfirmBtn.disabled = true;
+		try {
+			const contactForVoid = await ipcRenderer.invoke('void-journal-entry', voidEntry);
+			if (!contactForVoid.didFail) {
+				alert("Successfully Voided Journal Entry!");
+				closeVoidModal();
+				control.fetchJournalEntries();
+			} else {
+				alert(contactForVoid.message);
+			}
+		} catch (err) {
+			console.log("Client error: ", err);
+		} finally {
+			voidConfirmBtn.disabled = false;
+		}
+	});
 
 	saveBtn.addEventListener("click", async (e) => {
 		const lineRows = document.querySelectorAll("#journalEntryLines .je-line");
@@ -224,6 +281,13 @@ control.openJournalEntryModal = async () => {
 	document.getElementById("journalEntryModal").classList.add("is-active");
 };
 
+control.openVoidModal = (entry) => {
+	control.voidingEntryID = entry.EntryID;
+	document.getElementById("journalVoidMessage").textContent =
+		`Void ${entry.ReferenceNo} — ${entry.Description}? Voided entries stay in the journal but no longer affect balances.`;
+	document.getElementById("journalVoidModal").classList.add("is-active");
+};
+
 control.addJournalLine = (accounts) => {
 	const lineContainer = document.getElementById("journalEntryLines");
 	if (!accounts) return;
@@ -269,7 +333,7 @@ control.renderEntryRows = (entries) => {
 		const tr = document.createElement('tr');
 		const empty_ = document.createElement('td');
 
-		empty_.colSpan = 5;
+		empty_.colSpan = 6;
 		empty_.textContent = "No journal entries match the current filters.";
 
 		tr.append(empty_);
@@ -278,6 +342,8 @@ control.renderEntryRows = (entries) => {
 	}
 
 	for (const entry of displayedEntries) {
+		const isVoided = entry.Status === 'VOIDED';
+
 		entry.lines.forEach((line, index) => {
 			const tr = document.createElement('tr');
 			const date_ = document.createElement('td');
@@ -285,6 +351,7 @@ control.renderEntryRows = (entries) => {
 			const ref_ = document.createElement('td');
 			const debit_ = document.createElement('td');
 			const credit_ = document.createElement('td');
+			const action_ = document.createElement('td');
 
 			date_.className = 'col-no mono-nums';
 			particulars_.className = 'col-title';
@@ -301,7 +368,24 @@ control.renderEntryRows = (entries) => {
 			debit_.textContent = line.Debit > 0 ? formatAmount(line.Debit) : "";
 			credit_.textContent = line.Credit > 0 ? formatAmount(line.Credit) : "";
 
-			tr.append(date_, particulars_, ref_, debit_, credit_);
+			if (isVoided) {
+				tr.classList.add('is-voided');
+				if (index === 0) {
+					const badge = document.createElement('span');
+					badge.className = 'je-voided-badge';
+					badge.textContent = 'VOIDED';
+					action_.appendChild(badge);
+				}
+			} else if (index === 0) {
+				const voidButton = document.createElement('button');
+				voidButton.type = 'button';
+				voidButton.className = 'je-void-btn';
+				voidButton.textContent = 'Void';
+				voidButton.addEventListener('click', () => control.openVoidModal(entry));
+				action_.appendChild(voidButton);
+			}
+
+			tr.append(date_, particulars_, ref_, debit_, credit_, action_);
 			journalEntriesTable.appendChild(tr);
 		});
 
@@ -310,7 +394,10 @@ control.renderEntryRows = (entries) => {
 		const note = document.createElement('td');
 
 		noteRow.className = 'entry-note';
-		note.colSpan = 4;
+		if (isVoided) {
+			noteRow.classList.add('is-voided');
+		}
+		note.colSpan = 5;
 		note.textContent = entry.Description;
 
 		noteRow.append(noteSpacer, note);

@@ -1,4 +1,4 @@
-import { loadPage } from "../renderer.js";
+import { getBusinessName, loadPage } from "../renderer.js";
 
 const SUBNAV_ITEMS = [
 	{ name: 'chart-of-accounts', label: 'Charts of Accounts' },
@@ -25,7 +25,7 @@ export function renderWorkspaceLayout(activePageName, contentHtml) {
 		<div class="workspace-container">
 			<header>
 				<div class="titlebar">
-					<h1>EZFinanceManager - Juan’s Bakery</h1>
+					<h1>${getBusinessName()}</h1>
 				</div>
 
 				<div class="menubar">
@@ -52,5 +52,12 @@ export function initWorkspaceNav(pageName) {
 		btn.addEventListener('click', () => {
 			loadPage(btn.dataset.page);
 		});
+	});
+}
+
+export function updateWorkspaceTitle() {
+	const businessName = getBusinessName();
+	document.querySelectorAll('.workspace-container .titlebar h1').forEach((h1) => {
+		h1.textContent = businessName;
 	});
 }

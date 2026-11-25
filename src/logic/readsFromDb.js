@@ -47,3 +47,24 @@ export function getJournalEntries(businessID) {
 
   return entries;
 }
+
+export function getPostedJournalLines(businessID) {
+  const stmt = db.prepare(`
+    SELECT 
+      JournalLines.*,
+      JournalEntries.EntryDate,
+      JournalEntries.ReferenceNo,
+      JournalEntries.Description,
+      Accounts.AccountCode,
+      Accounts.AccountName,
+      Accounts.AccountType,
+      Accounts.NormalBalance
+    FROM JournalLines
+    INNER JOIN JournalEntries ON JournalLines.EntryID = JournalEntries.EntryID
+    INNER JOIN Accounts ON JournalLines.AccountID = Accounts.AccountID
+    WHERE JournalEntries.BusinessID = ? AND JournalEntries.Status = 'POSTED'
+    ORDER BY JournalEntries.EntryDate ASC, JournalEntries.EntryID ASC, JournalLines.LineID ASC
+  `);
+
+  return stmt.all(businessID);
+}

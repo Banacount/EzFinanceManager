@@ -1,5 +1,5 @@
 import db_pkg from '../data/database.cjs';
-import { TransactionPayloadSchema, BusinessSchema, AccountEditSchema, BusinessDeleteSchema, AccountAddSchema, AccountsDeleteSchema } from './schemas.js';
+import { TransactionPayloadSchema, JournalEntryVoidSchema, BusinessSchema, AccountEditSchema, BusinessDeleteSchema, AccountAddSchema, AccountsDeleteSchema } from './schemas.js';
 
 const { db } = db_pkg;
 
@@ -14,7 +14,7 @@ export function createJournalEntry(payload) {
     throw new Error(`Validation Error: ${errorMessages}`);
   }
 
-  const { businessID, entryDate, referenceNo, description, createdBy, lines } = validationResult.data;
+  const { businessID, entryDate, referenceNo, description, createdBy, status, lines } = validationResult.data;
 
   // Compute and verify double-entry balance rule (Total Debits == Total Credits)
   let totalDebits = 0;
@@ -35,10 +35,10 @@ export function createJournalEntry(payload) {
     // Insert Header into JournalEntries
     const stmtHeader = db.prepare(`
       INSERT INTO JournalEntries (BusinessID, EntryDate, ReferenceNo, Description, EntryType, Status, CreatedAt, CreatedBy)
-      VALUES (?, ?, ?, ?, 'REGULAR', 'POSTED', datetime('now'), ?)
+      VALUES (?, ?, ?, ?, 'REGULAR', ?, datetime('now'), ?)
     `);
     
-    const headerResult = stmtHeader.run(businessID, entryDate, referenceNo, description, createdBy);
+    const headerResult = stmtHeader.run(businessID, entryDate, referenceNo, description, status, createdBy);
     const entryID = headerResult.lastInsertRowid;
 
     // Insert Line Items into JournalLines
@@ -56,7 +56,7 @@ export function createJournalEntry(payload) {
       INSERT INTO AuditTrail (TableName, RecordID, Action, OldValue, NewValue, ActionDate, UserName)
       VALUES ('JournalEntries', ?, 'INSERT', NULL, ?, datetime('now'), ?)
     `);
-    stmtAudit.run(entryID, JSON.stringify({ referenceNo, description, totalDebits }), createdBy);
+    stmtAudit.run(entryID, JSON.stringify({ referenceNo, description, totalDebits, status }), createdBy);
 
     return entryID;
   });
@@ -69,6 +69,59 @@ export function createJournalEntry(payload) {
     if (error.message.includes('UNIQUE constraint failed')) {
       throw new Error(`Reference number '${referenceNo}' already exists. Reference numbers must be unique.`);
     }
+    throw error;
+  }
+}
+
+/**
+ * Voids a journal entry without removing it from the journal.
+ * The entry stays in the list but is excluded from ledger and balance queries.
+ */
+export function voidJournalEntry(payload) {
+  const validation = JournalEntryVoidSchema.safeParse(payload);
+  if (!validation.success) {
+    throw new Error(`Validation failed: ${validation.error.issues.map(i => i.message).join(', ')}`);
+  }
+
+  const { businessID, entryID, voidedBy } = validation.data;
+
+  const voidEntryTx = db.transaction(() => {
+    const existingEntry = db.prepare(`
+      SELECT * FROM JournalEntries WHERE EntryID = ? AND BusinessID = ?
+    `).get(entryID, businessID);
+
+    if (!existingEntry) {
+      throw new Error("Journal entry not found for this business.");
+    }
+
+    if (existingEntry.Status === 'VOIDED') {
+      throw new Error("Journal entry is already voided.");
+    }
+
+    db.prepare(`
+      UPDATE JournalEntries
+      SET Status = 'VOIDED'
+      WHERE EntryID = ? AND BusinessID = ?
+    `).run(entryID, businessID);
+
+    const stmtAudit = db.prepare(`
+      INSERT INTO AuditTrail (TableName, RecordID, Action, OldValue, NewValue, ActionDate, UserName)
+      VALUES ('JournalEntries', ?, 'UPDATE', ?, ?, datetime('now'), ?)
+    `);
+    stmtAudit.run(
+      entryID,
+      JSON.stringify({ status: existingEntry.Status }),
+      JSON.stringify({ status: 'VOIDED' }),
+      voidedBy
+    );
+
+    return entryID;
+  });
+
+  try {
+    const voidedEntryID = voidEntryTx();
+    return { success: true, entryID: voidedEntryID, message: "Journal entry voided successfully." };
+  } catch (error) {
     throw error;
   }
 }

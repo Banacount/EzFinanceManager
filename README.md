@@ -1,3 +1,23 @@
+# Project Progress
+
+- [x] Main menu.
+- [x] Opening, adding, deleting a business.
+- [x] Workspace header and menu.
+- [x] Work: chart of accounts
+- [x] Work: journal entries
+- [x] Work: ledger
+- [x] Work: ujbt
+- [ ] Work: aje
+- [ ] Work: ajtb
+- [ ] Work: income statement
+- [ ] Work: balance sheet
+- [ ] Work: closing entries
+- [ ] Work: pcbt
+- [ ] Work: worksheet
+- [ ] Settings menu controls.
+
+---
+
 ### Project Overview
 
 Your group is tasked with designing and developing a computerized accounting application that will help a

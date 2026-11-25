@@ -1,6 +1,11 @@
 import { loadPage, setBusinessId } from "../renderer.js";
 import { default as chartOfAccounts } from "./worksheets/chartOfAccounts.js";
 import { default as journalEntries } from "./worksheets/journalEntries.js";
+import { default as ledger } from "./worksheets/ledger.js";
+import { default as ujbt } from "./worksheets/ujbt.js";
+import { default as balanceSheet } from "./worksheets/balanceSheet.js";
+import { default as incomeStatement } from "./worksheets/incomeStatement.js";
+import { updateWorkspaceTitle } from "./workspaceHeader.js";
 const { ipcRenderer } = require('electron');
 
 const control = {};
@@ -156,10 +161,16 @@ control.init = () => {
 				businessItemContainer.appendChild(itemElement);
 
 				button.addEventListener('click', (e) => {
-					setBusinessId(business.BusinessID);
+					setBusinessId(business.BusinessID, business.BusinessName);
+					updateWorkspaceTitle();
+					ipcRenderer.invoke('set-window-title', business.BusinessName);
 					loadPage('chart-of-accounts');
 					chartOfAccounts.fetchAccounts();
 					journalEntries.fetchJournalEntries();
+					ledger.fetchLedgerLines();
+					ujbt.fetchTrialBalanceLines();
+					balanceSheet.fetchBalanceSheetLines();
+					incomeStatement.fetchIncomeStatementLines();
 				});
 
 				deleteButton.addEventListener('click', (e) => openDeleteModal(business));

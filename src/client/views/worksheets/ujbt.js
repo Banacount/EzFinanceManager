@@ -1,8 +1,11 @@
+import { getBusinessName } from '../../renderer.js';
 import { initWorkspaceNav, renderWorkspaceLayout } from '../workspaceHeader.js';
+import { balanceBySide, fetchPostedJournalLines, formatAmount, groupAccountLines } from './reportData.js';
 
 const control = {};
 
 control.name = 'ujbt';
+control.lines = [];
 
 control.render = () => {
 	return renderWorkspaceLayout(
@@ -11,10 +14,10 @@ control.render = () => {
 			<div class="coa-header">
 				<div>
 					<h2>Unadjusted Trial Balance (UJBT)</h2>
-					<p class="coa-subtitle">Juan’s Bakery · As of Jan 31, 2026</p>
+					<p class="coa-subtitle">Trial balance · As of Jan 31, 2026</p>
 				</div>
 				<div class="coa-actions">
-					<button type="button" class="coa-secondary-btn">Print UJBT</button>
+					<button type="button" class="coa-secondary-btn" id="printUjbtBtn">Print UJBT</button>
 				</div>
 			</div>
 
@@ -28,68 +31,7 @@ control.render = () => {
 							<th class="text-right">Credit</th>
 						</tr>
 					</thead>
-					<tbody>
-						<tr>
-							<td class="col-no tabular-nums">110</td>
-							<td class="col-title">Cash</td>
-							<td class="text-right mono-nums">139,000.00</td>
-							<td class="text-right mono-nums"></td>
-						</tr>
-						<tr>
-							<td class="col-no tabular-nums">120</td>
-							<td class="col-title">Accounts receivable</td>
-							<td class="text-right mono-nums">14,000.00</td>
-							<td class="text-right mono-nums"></td>
-						</tr>
-						<tr>
-							<td class="col-no tabular-nums">155</td>
-							<td class="col-title">Prepaid rent</td>
-							<td class="text-right mono-nums">36,000.00</td>
-							<td class="text-right mono-nums"></td>
-						</tr>
-						<tr>
-							<td class="col-no tabular-nums">190</td>
-							<td class="col-title">Equipment</td>
-							<td class="text-right mono-nums">65,000.00</td>
-							<td class="text-right mono-nums"></td>
-						</tr>
-						<tr>
-							<td class="col-no tabular-nums">210</td>
-							<td class="col-title">Accounts payable</td>
-							<td class="text-right mono-nums"></td>
-							<td class="text-right mono-nums">65,000.00</td>
-						</tr>
-						<tr>
-							<td class="col-no tabular-nums">310</td>
-							<td class="col-title">Owner’s capital</td>
-							<td class="text-right mono-nums"></td>
-							<td class="text-right mono-nums">150,000.00</td>
-						</tr>
-						<tr>
-							<td class="col-no tabular-nums">320</td>
-							<td class="col-title"><span>Owner’s drawings</span><span class="contra-tag">contra</span></td>
-							<td class="text-right mono-nums">5,000.00</td>
-							<td class="text-right mono-nums"></td>
-						</tr>
-						<tr>
-							<td class="col-no tabular-nums">410</td>
-							<td class="col-title">Service fee</td>
-							<td class="text-right mono-nums"></td>
-							<td class="text-right mono-nums">62,500.00</td>
-						</tr>
-						<tr>
-							<td class="col-no tabular-nums">520</td>
-							<td class="col-title">Salaries expense</td>
-							<td class="text-right mono-nums">18,500.00</td>
-							<td class="text-right mono-nums"></td>
-						</tr>
-						<tr class="total-row">
-							<td class="col-no"></td>
-							<td class="col-title">Total</td>
-							<td class="text-right mono-nums">277,500.00</td>
-							<td class="text-right mono-nums">277,500.00</td>
-						</tr>
-					</tbody>
+					<tbody id="trialBalanceRows"></tbody>
 				</table>
 			</div>
 		`,
@@ -98,6 +40,91 @@ control.render = () => {
 
 control.init = () => {
 	initWorkspaceNav(control.name);
+	document.getElementById("printUjbtBtn").addEventListener("click", (e) => {
+		document.body.classList.add("printing-ujbt");
+		window.addEventListener("afterprint", () => document.body.classList.remove("printing-ujbt"), { once: true });
+		window.print();
+	});
+};
+
+control.updateSubtitle = () => {
+	const subtitle = document.querySelector(`#${control.name} .coa-subtitle`);
+	if (subtitle) {
+		subtitle.textContent = `${getBusinessName() || 'Business'} · As of Jan 31, 2026`;
+	}
+};
+
+control.fetchTrialBalanceLines = async () => {
+	const lines = await fetchPostedJournalLines();
+	if (!lines) return;
+
+	control.lines = lines;
+	control.renderTrialBalance();
+};
+
+control.renderTrialBalance = () => {
+	const tableBody = document.getElementById("trialBalanceRows");
+	tableBody.innerHTML = "";
+	control.updateSubtitle();
+
+	const accounts = groupAccountLines(control.lines);
+	if (accounts.length === 0) {
+		const tr = document.createElement('tr');
+		const empty_ = document.createElement('td');
+		empty_.colSpan = 4;
+		empty_.textContent = "No posted journal entries yet.";
+		tr.appendChild(empty_);
+		tableBody.appendChild(tr);
+		return;
+	}
+
+	let totalDebit = 0;
+	let totalCredit = 0;
+
+	for (const account of accounts) {
+		const tr = document.createElement('tr');
+		const no_ = document.createElement('td');
+		const title_ = document.createElement('td');
+		const debit_ = document.createElement('td');
+		const credit_ = document.createElement('td');
+
+		const balance = balanceBySide(account);
+		const debitBalance = balance >= 0 ? balance : 0;
+		const creditBalance = balance < 0 ? -balance : 0;
+
+		totalDebit += debitBalance;
+		totalCredit += creditBalance;
+
+		no_.className = 'col-no tabular-nums';
+		title_.className = 'col-title';
+		debit_.className = 'text-right mono-nums';
+		credit_.className = 'text-right mono-nums';
+
+		no_.textContent = account.accountCode;
+		title_.textContent = account.accountName;
+		debit_.textContent = debitBalance > 0 ? formatAmount(debitBalance) : "";
+		credit_.textContent = creditBalance > 0 ? formatAmount(creditBalance) : "";
+
+		tr.append(no_, title_, debit_, credit_);
+		tableBody.appendChild(tr);
+	}
+
+	const totalRow = document.createElement('tr');
+	const totalSpacer = document.createElement('td');
+	const totalTitle = document.createElement('td');
+	const totalDebit_ = document.createElement('td');
+	const totalCredit_ = document.createElement('td');
+
+	totalRow.className = 'total-row';
+	totalTitle.className = 'col-title';
+	totalDebit_.className = 'text-right mono-nums';
+	totalCredit_.className = 'text-right mono-nums';
+	totalTitle.textContent = 'Total';
+	totalDebit_.textContent = formatAmount(totalDebit);
+	totalCredit_.textContent = formatAmount(totalCredit);
+
+	totalRow.append(totalSpacer, totalTitle, totalDebit_, totalCredit_);
+	tableBody.appendChild(totalRow);
 };
 
 export default control;

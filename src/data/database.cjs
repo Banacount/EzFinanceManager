@@ -38,7 +38,7 @@ const createTableQuery = `
       ReferenceNo TEXT UNIQUE NOT NULL,
       Description TEXT NOT NULL,
       EntryType TEXT NOT NULL DEFAULT 'REGULAR',
-      Status TEXT NOT NULL DEFAULT 'DRAFT' CHECK(Status IN ('DRAFT', 'POSTED')),
+      Status TEXT NOT NULL DEFAULT 'POSTED' CHECK(Status IN ('POSTED', 'VOIDED')),
       CreatedAt TEXT NOT NULL,
       CreatedBy TEXT NOT NULL,
       FOREIGN KEY (BusinessID) REFERENCES Business(BusinessID) ON DELETE RESTRICT
@@ -90,9 +90,49 @@ const createTableQuery = `
   );
 `;
 
+function migrateJournalEntryStatus() {
+  const tableSql = db.prepare(`
+    SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'JournalEntries'
+  `).get()?.sql || '';
+
+  if (tableSql.includes("'VOIDED'")) return;
+
+  db.pragma('foreign_keys = OFF');
+  try {
+    db.transaction(() => {
+      db.exec(`
+        CREATE TABLE JournalEntries_StatusMigration (
+            EntryID INTEGER PRIMARY KEY AUTOINCREMENT,
+            BusinessID INTEGER NOT NULL,
+            EntryDate TEXT NOT NULL,
+            ReferenceNo TEXT UNIQUE NOT NULL,
+            Description TEXT NOT NULL,
+            EntryType TEXT NOT NULL DEFAULT 'REGULAR',
+            Status TEXT NOT NULL DEFAULT 'POSTED' CHECK(Status IN ('POSTED', 'VOIDED')),
+            CreatedAt TEXT NOT NULL,
+            CreatedBy TEXT NOT NULL,
+            FOREIGN KEY (BusinessID) REFERENCES Business(BusinessID) ON DELETE RESTRICT
+        );
+
+        INSERT INTO JournalEntries_StatusMigration (EntryID, BusinessID, EntryDate, ReferenceNo, Description, EntryType, Status, CreatedAt, CreatedBy)
+        SELECT EntryID, BusinessID, EntryDate, ReferenceNo, Description, EntryType,
+          CASE WHEN Status = 'DRAFT' THEN 'POSTED' ELSE Status END,
+          CreatedAt, CreatedBy
+        FROM JournalEntries;
+
+        DROP TABLE JournalEntries;
+        ALTER TABLE JournalEntries_StatusMigration RENAME TO JournalEntries;
+      `);
+    })();
+  } finally {
+    db.pragma('foreign_keys = ON');
+  }
+}
+
 function initializeDatabase() {
   // Seed Default Business Profile & Chart of Accounts if empty
   db.exec(createTableQuery);
+  migrateJournalEntryStatus();
   seedDefaultData();
   console.log("Database initialized successfully at:", dbPath);
 }

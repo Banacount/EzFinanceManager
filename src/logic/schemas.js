@@ -10,6 +10,8 @@ export const JournalLineSchema = z.object({
   message: "A single line item cannot have both a debit and a credit amount."
 });
 
+export const JournalEntryStatusSchema = z.enum(['POSTED', 'VOIDED']);
+
 // Zod schema for validating an entire transaction submission
 export const TransactionPayloadSchema = z.object({
   businessID: z.number().int().positive(),
@@ -17,7 +19,14 @@ export const TransactionPayloadSchema = z.object({
   referenceNo: z.string().min(1, "Reference number is required"),
   description: z.string().min(1, "Description is required"),
   createdBy: z.string().min(1, "Creator username is required"),
+  status: JournalEntryStatusSchema.default('POSTED'),
   lines: z.array(JournalLineSchema).min(2, "An entry must have at least two account lines")
+});
+
+export const JournalEntryVoidSchema = z.object({
+  businessID: z.number().int().positive("Invalid Business ID"),
+  entryID: z.number().int().positive("Invalid Entry ID"),
+  voidedBy: z.string().trim().min(1, "Voider username is required").default('System')
 });
 
 export const BusinessSchema = z.object({

@@ -201,7 +201,8 @@
 .business-menu-container .section-1 .table .item .delete-business-btn:hover,
 .business-delete-modal .business-delete-modal-confirm-btn:hover,
 .workspace-container .content .coa-header .coa-actions .coa-delete-selected-btn:hover,
-.coa-delete-modal .coa-edit-modal-primary-btn:hover {
+.coa-delete-modal .coa-edit-modal-primary-btn:hover,
+.je-void-btn:hover {
 	animation: ui-danger-shake 0.4s ease-in-out infinite;
 }
 

@@ -1,8 +1,8 @@
 import db_pkg from './src/data/database.cjs';
 import { app, BrowserWindow, ipcMain } from 'electron/main';
 import path from 'path';
-import { createJournalEntry, createBusiness, editAccount, deleteBusiness, createAccount, deleteAccounts } from './src/logic/writesToDb.js';
-import { getAllBusiness, getAccounts, getJournalEntries } from './src/logic/readsFromDb.js';
+import { createJournalEntry, voidJournalEntry, createBusiness, editAccount, deleteBusiness, createAccount, deleteAccounts } from './src/logic/writesToDb.js';
+import { getAllBusiness, getAccounts, getJournalEntries, getPostedJournalLines } from './src/logic/readsFromDb.js';
 
 const { initializeDatabase, db } = db_pkg;
 initializeDatabase();
@@ -107,6 +107,18 @@ ipcMain.handle('get-journal-entries', (event, businessID) => {
   }
 });
 
+ipcMain.handle('set-window-title', (event, businessName) => {
+  try {
+    const mainWindow = BrowserWindow.getAllWindows()[0];
+    if (mainWindow) {
+      mainWindow.setTitle(`EzFinanceManager - ${businessName}`);
+    }
+    return { didFail: false, message: businessName };
+  } catch (error) {
+    return { didFail: true, message: error.message };
+  }
+});
+
 ipcMain.handle('add-business', (event, business) => {
   try {
     const businessPayload = {
@@ -187,6 +199,9 @@ ipcMain.handle('delete-accounts', (event, selection) => {
 
 ipcMain.handle('add-journal-entry', (event, entry) => {
   try {
+    if (!entry.ReferenceNo) throw new Error("No reference number.");
+    if (!entry.Description) throw new Error("No description.");
+
     const entryPayload = {
       businessID: Number(entry.BusinessID),
       entryDate: entry.EntryDate,
@@ -203,6 +218,32 @@ ipcMain.handle('add-journal-entry', (event, entry) => {
 
     const result = createJournalEntry(entryPayload);
     return { didFail: false, message: result };
+  } catch (error) {
+    return { didFail: true, message: error.message };
+  }
+});
+
+ipcMain.handle('void-journal-entry', (event, entry) => {
+  try {
+    const voidPayload = {
+      businessID: Number(entry.BusinessID),
+      entryID: Number(entry.EntryID),
+      voidedBy: entry.VoidedBy || 'System'
+    };
+
+    const result = voidJournalEntry(voidPayload);
+    return { didFail: false, message: result };
+  } catch (error) {
+    return { didFail: true, message: error.message };
+  }
+});
+
+ipcMain.handle('get-posted-journal-lines', (event, businessID) => {
+  try {
+    if (!businessID) throw new Error("The Business ID is blank.");
+
+    const get = getPostedJournalLines(businessID);
+    return { didFail: false, message: get };
   } catch (error) {
     return { didFail: true, message: error.message };
   }

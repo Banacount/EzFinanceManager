@@ -1,0 +1,104 @@
+@page {
+	margin: 12mm;
+}
+
+@media print {
+	body.printing-ujbt {
+		background-color: #FFFFFF !important;
+	}
+
+	body.printing-ujbt #appContainer > div {
+		display: none !important;
+	}
+
+	body.printing-ujbt #appContainer > #ujbt {
+		display: block !important;
+	}
+
+	body.printing-ujbt #ujbt .workspace-container > header,
+	body.printing-ujbt #ujbt .coa-header .coa-actions,
+	body.printing-ujbt #ujbt .coa-edit-modal {
+		display: none !important;
+	}
+
+	body.printing-ujbt #ujbt .workspace-container,
+	body.printing-ujbt #ujbt .workspace-container .content {
+		width: 100%;
+		max-width: none;
+		margin: 0;
+		padding: 0;
+		background-color: #FFFFFF;
+	}
+
+	body.printing-ujbt #ujbt .coa-header {
+		display: block;
+		margin: 0 0 6mm;
+		padding: 0;
+	}
+
+	body.printing-ujbt #ujbt .coa-header h2 {
+		font-size: 18pt;
+		color: #000000;
+	}
+
+	body.printing-ujbt #ujbt .coa-header .coa-subtitle {
+		margin-top: 2mm;
+		font-size: 10pt;
+		color: #000000;
+	}
+
+	body.printing-ujbt #ujbt .coa-table-wrap {
+		width: 100%;
+		max-width: none;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		border-radius: 0;
+		background-color: #FFFFFF;
+		overflow: visible;
+	}
+
+	body.printing-ujbt #ujbt .coa-table {
+		width: 100%;
+		min-width: 0 !important;
+		border-collapse: collapse;
+		table-layout: fixed;
+		font-size: 10pt;
+	}
+
+	body.printing-ujbt #ujbt .coa-table thead {
+		display: table-header-group;
+	}
+
+	body.printing-ujbt #ujbt .coa-table tr {
+		break-inside: avoid;
+		page-break-inside: avoid;
+	}
+
+	body.printing-ujbt #ujbt .coa-table th,
+	body.printing-ujbt #ujbt .coa-table td {
+		border: 1px solid #000000;
+		background-color: #FFFFFF !important;
+		color: #000000 !important;
+		font-size: 10pt;
+		padding: 2mm;
+	}
+
+	body.printing-ujbt #ujbt .coa-table th {
+		border-bottom: 1px solid #000000;
+		color: #000000 !important;
+	}
+
+	body.printing-ujbt #ujbt .coa-table tr.total-row td {
+		border-top: 1px solid #000000;
+		border-bottom: 2px double #000000;
+	}
+
+	body.printing-ujbt #ujbt *,
+	body.printing-ujbt #ujbt *::before,
+	body.printing-ujbt #ujbt *::after {
+		box-shadow: none !important;
+		text-shadow: none !important;
+		animation: none !important;
+	}
+}

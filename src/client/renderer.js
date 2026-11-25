@@ -16,6 +16,7 @@ import { default as closingEntries } from './views/worksheets/closingEntries.js'
 import { default as pcbt } from './views/worksheets/pcbt.js';
 
 const CURRENT_BUSINESS_ID = "current_business_id";
+const CURRENT_BUSINESS_NAME = "current_business_name";
 
 const pages = [
 	notFound,
@@ -58,15 +59,22 @@ export function loadPage (name) {
 	}
 }
 
-export function setBusinessId (number) {
+export function setBusinessId (number, businessName) {
 	localStorage.setItem(CURRENT_BUSINESS_ID, number)
+	if (businessName !== undefined) {
+		localStorage.setItem(CURRENT_BUSINESS_NAME, businessName)
+	}
 }
 export function getBusinessId () {
 	return localStorage.getItem(CURRENT_BUSINESS_ID);
 }
+export function getBusinessName () {
+	return localStorage.getItem(CURRENT_BUSINESS_NAME) || '';
+}
 
 // Global variables
 localStorage.setItem(CURRENT_BUSINESS_ID, -1);
+localStorage.setItem(CURRENT_BUSINESS_NAME, '');
 
 // sum app all dom elements
 for (const page of pages) {

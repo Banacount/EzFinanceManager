@@ -241,6 +241,7 @@
 .workspace-container .content .coa-table-wrap .coa-table th {
 	padding-top: 0.75rem;
 	padding-bottom: 0.75rem;
+	padding-left: 0.75rem;
 	border-right: 1px solid var(--table-rule);
 	font-size: 0.85rem;
 	font-weight: 600;
@@ -290,6 +291,7 @@
 .workspace-container .content .coa-table-wrap .coa-table tbody td {
 	padding-top: 0.875rem;
 	padding-bottom: 0.875rem;
+	padding-left: 0.875rem;
 	font-size: 0.875rem;
 	color: var(--text-dark);
 }
@@ -570,7 +572,7 @@
 }
 
 .je-entry-modal .coa-edit-modal-body {
-	max-height: 60vh;
+	max-height: 64vh;
 	overflow-y: auto;
 }
 
@@ -610,12 +612,12 @@
 
 .je-add-line-btn {
 	justify-self: start;
-	height: 2.5rem;
+	height: 4rem;
 	padding-left: 1.25rem;
 	padding-right: 1.25rem;
 	background-color: var(--white);
 	border: 1px solid var(--border-color-1);
-	border-radius: 0.6rem;
+	border-radius: 0.4rem;
 	font-size: 0.9rem;
 	font-weight: 600;
 	color: var(--fg-color-1);
@@ -625,3 +627,36 @@
 	background-color: var(--bg-color);
 }
 
+.workspace-container .content .coa-table-wrap .je-entry-table tbody tr.is-voided td {
+	color: var(--fg-color-3);
+}
+
+.workspace-container .content .coa-table-wrap .je-entry-table tbody tr.is-voided td.col-title {
+	text-decoration: line-through;
+}
+
+.je-voided-badge {
+	display: inline-block;
+	padding: 0.15rem 0.5rem;
+	background-color: #FEE2E2;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: var(--danger-color);
+}
+
+.je-void-btn {
+	height: 2rem;
+	padding-left: 0.75rem;
+	padding-right: 0.75rem;
+	background-color: var(--white);
+	border: 1px solid var(--danger-color);
+	border-radius: 0.4rem;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: var(--danger-color);
+}
+
+.je-void-btn:hover {
+	background-color: #FEF2F2;
+}
