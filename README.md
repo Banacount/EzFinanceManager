@@ -58,3 +58,20 @@ Install all packages
 
 Run the program
 `npx electron {name_of_js_file or .}`
+
+### Compiling the program
+Rebuild electron app
+```
+npx @electron/rebuild
+```
+
+Linux. Built to `dist/` directory
+```
+npm run dist:linux
+```
+
+Windows. Built to `dist/` directory
+```
+npm run dist:win
+```
+
