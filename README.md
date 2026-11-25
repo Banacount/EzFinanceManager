@@ -47,7 +47,7 @@ Development Steps:
 * Database design (Entities and Attributes) - __Gabriza & Catanus__
 * Database implementation (SQLite) - __Valmoria__
 * User interface planning (Can be Figma or Canva) - __Taguran & Abejuela & Tumampoc__
-* Data handlers development and Testing (Users) - __Soledio & Hallazgo__
+* Data handlers development and Testing (Users) - __Soledio & Hallazgo & Chabit__
 * Migrating user interface plan to client (HTML, CSS) - __Valmoria__
 * Finalized testing and debugging (Javascript) - __Valmoria__
 
